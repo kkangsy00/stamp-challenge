@@ -5,6 +5,10 @@ import { supabase } from '../lib/supabase.js'
 const challenges = ref([])
 const newTitle = ref('')
 const challengeLoading = ref(false)
+const editingChallengeId = ref(null)
+const editingTitle = ref('')
+const renamingChallengeId = ref(null)
+const challengeMessage = ref('')
 
 const stamps = ref([])
 const uploading = ref(false)
@@ -23,6 +27,7 @@ async function fetchChallenges() {
 async function addChallenge() {
   if (!newTitle.value.trim()) return
   challengeLoading.value = true
+  challengeMessage.value = ''
 
   const { data: { user } } = await supabase.auth.getUser()
   await supabase.from('challenges').insert({
@@ -38,6 +43,49 @@ async function addChallenge() {
 async function toggleActive(c) {
   await supabase.from('challenges').update({ is_active: !c.is_active }).eq('id', c.id)
   await fetchChallenges()
+}
+
+function startEditingChallenge(challenge) {
+  editingChallengeId.value = challenge.id
+  editingTitle.value = challenge.title
+  challengeMessage.value = ''
+}
+
+function cancelEditingChallenge() {
+  editingChallengeId.value = null
+  editingTitle.value = ''
+}
+
+async function renameChallenge(challenge) {
+  const trimmedTitle = editingTitle.value.trim()
+
+  if (!trimmedTitle) {
+    challengeMessage.value = '챌린지 이름을 입력해주세요.'
+    return
+  }
+
+  if (trimmedTitle === challenge.title) {
+    cancelEditingChallenge()
+    return
+  }
+
+  renamingChallengeId.value = challenge.id
+  challengeMessage.value = ''
+
+  const { error } = await supabase
+    .from('challenges')
+    .update({ title: trimmedTitle })
+    .eq('id', challenge.id)
+
+  if (error) {
+    challengeMessage.value = '이름 수정 실패: ' + error.message
+  } else {
+    challengeMessage.value = '챌린지 이름을 수정했어요.'
+    cancelEditingChallenge()
+    await fetchChallenges()
+  }
+
+  renamingChallengeId.value = null
 }
 
 async function deleteChallenge(c) {
@@ -123,15 +171,50 @@ onMounted(async () => {
         <button type="submit" :disabled="challengeLoading">추가</button>
       </form>
 
+      <p v-if="challengeMessage" class="msg challenge-msg">{{ challengeMessage }}</p>
+
       <div v-if="challenges.length === 0" class="empty">아직 챌린지가 없습니다.</div>
       <div v-for="c in challenges" :key="c.id" class="challenge-card" :class="{ inactive: !c.is_active }">
         <div class="card-info">
-          <span class="card-title">{{ c.title }}</span>
+          <template v-if="editingChallengeId === c.id">
+            <input
+              v-model="editingTitle"
+              class="edit-input"
+              :disabled="renamingChallengeId === c.id"
+              @keyup.enter="renameChallenge(c)"
+              @keyup.esc="cancelEditingChallenge"
+            />
+          </template>
+          <span v-else class="card-title">{{ c.title }}</span>
           <span class="card-badge" :class="c.is_active ? 'active' : 'archived'">
             {{ c.is_active ? '진행중' : '보관' }}
           </span>
         </div>
         <div class="card-actions">
+          <template v-if="editingChallengeId === c.id">
+            <button
+              @click="renameChallenge(c)"
+              class="btn-sm btn-primary"
+              :disabled="renamingChallengeId === c.id"
+            >
+              {{ renamingChallengeId === c.id ? '저장 중...' : '저장' }}
+            </button>
+            <button
+              @click="cancelEditingChallenge"
+              class="btn-sm"
+              :disabled="renamingChallengeId === c.id"
+            >
+              취소
+            </button>
+          </template>
+          <button
+            v-else
+            @click="startEditingChallenge(c)"
+            class="btn-sm"
+            :disabled="renamingChallengeId === c.id"
+          >
+            이름 수정
+          </button>
           <button @click="toggleActive(c)" class="btn-sm">{{ c.is_active ? '보관' : '복원' }}</button>
           <button @click="deleteChallenge(c)" class="btn-sm btn-delete">삭제</button>
         </div>
@@ -211,6 +294,17 @@ h2 { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em; text-transfor
 .challenge-card.inactive { opacity: 0.5; }
 .card-info { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
 .card-title { font-weight: 600; font-size: 0.92rem; color: #0a0a0a; }
+.edit-input {
+  flex: 1;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #0a0a0a;
+  background: #fff;
+}
+.edit-input:focus { outline: 2px solid #1a3a5c; outline-offset: 1px; }
 .card-badge { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.04em; }
 .card-badge.active { background: #0a0a0a; color: #fff; }
 .card-badge.archived { background: #f0f0f0; color: #737373; }
@@ -226,6 +320,12 @@ h2 { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em; text-transfor
   transition: all 0.15s;
 }
 .btn-sm:hover { background: #f5f5f5; color: #0a0a0a; }
+.btn-primary {
+  background: #1a3a5c;
+  border-color: #1a3a5c;
+  color: #fff;
+}
+.btn-primary:hover { background: #0f2540; color: #fff; }
 .btn-delete {
   font-size: 0.78rem;
   padding: 4px 10px;
@@ -267,6 +367,7 @@ h2 { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em; text-transfor
 .upload-form button:hover:not(:disabled) { background: #0f2540; }
 .upload-form button:disabled { opacity: 0.5; cursor: not-allowed; }
 .msg { font-size: 0.88rem; color: #1a3a5c; margin-bottom: 10px; font-weight: 500; }
+.challenge-msg { margin-top: -2px; }
 .stamp-list {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));

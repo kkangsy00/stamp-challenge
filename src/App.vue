@@ -80,23 +80,23 @@ async function logout() {
     <header v-if="showChallengeUI" class="top-layout">
       <div class="top-row">
         <div class="challenge-select-wrap">
-          <label class="challenge-label">챌린지</label>
+          <label class="challenge-label">Challenge</label>
           <select v-model="selectedChallengeId" class="challenge-select">
-            <option value="" disabled>챌린지 선택</option>
+            <option value="" disabled>Select Challenge</option>
             <option v-for="c in challenges" :key="c.id" :value="c.id">{{ c.title }}</option>
           </select>
         </div>
 
         <div class="right-actions">
-          <router-link to="/settings" class="settings-link">설정</router-link>
-          <button @click="logout" class="btn-logout">로그아웃</button>
+          <router-link to="/settings" class="settings-link">Settings</router-link>
+          <button @click="logout" class="btn-logout">Logout</button>
         </div>
       </div>
 
       <div class="menu-row">
-        <router-link :to="withChallengeQuery('Home')">홈</router-link>
-        <router-link :to="withChallengeQuery('Calendar')">달력</router-link>
-        <router-link :to="withChallengeQuery('Rounds')">회차</router-link>
+        <router-link :to="withChallengeQuery('Home')">Home</router-link>
+        <router-link :to="withChallengeQuery('Calendar')">Calendar</router-link>
+        <router-link :to="withChallengeQuery('Rounds')">Rounds</router-link>
       </div>
     </header>
 
