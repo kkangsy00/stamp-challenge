@@ -109,14 +109,14 @@ async function logout() {
 <style scoped>
 .top-layout {
   background: #fff;
-  border-bottom: 1px solid #e5e7eb;
+  border-bottom: 1px solid #0a0a0a;
 }
 
 .top-row {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 12px 20px;
+  padding: 14px 24px;
 }
 
 .challenge-select-wrap {
@@ -126,62 +126,87 @@ async function logout() {
 }
 
 .challenge-label {
-  font-size: 0.9rem;
-  color: #555;
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #525252;
 }
 
 .challenge-select {
-  min-width: 220px;
+  min-width: 200px;
   padding: 6px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
   background: #fff;
+  font-size: 0.9rem;
+  color: #0a0a0a;
+  appearance: auto;
+  cursor: pointer;
+}
+.challenge-select:focus {
+  outline: 2px solid #1a3a5c;
+  outline-offset: 1px;
 }
 
 .right-actions {
   display: flex;
-  gap: 12px;
+  gap: 10px;
   align-items: center;
 }
 
 .settings-link {
   text-decoration: none;
-  color: #2563eb;
-  font-size: 0.9rem;
-  font-weight: 600;
+  color: #0a0a0a;
+  font-size: 0.85rem;
+  font-weight: 500;
+  padding: 5px 12px;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
+  transition: background 0.15s;
 }
+.settings-link:hover { background: #f5f5f5; }
 
 .menu-row {
   display: flex;
-  gap: 14px;
-  padding: 10px 20px 12px;
+  gap: 0;
+  padding: 0 24px;
 }
 
 .menu-row a {
   text-decoration: none;
-  color: #555;
-  font-size: 0.92rem;
-  padding: 4px 0;
+  color: #525252;
+  font-size: 0.88rem;
+  font-weight: 500;
+  padding: 10px 16px;
+  letter-spacing: 0.02em;
+  border-bottom: 2px solid transparent;
+  transition: color 0.15s;
 }
+.menu-row a:hover { color: #0a0a0a; }
 
 .menu-row a.router-link-active {
-  color: #2563eb;
-  font-weight: 600;
-  border-bottom: 2px solid #2563eb;
+  color: #1a3a5c;
+  font-weight: 700;
+  border-bottom: 2px solid #1a3a5c;
 }
 
 .btn-logout {
   background: none;
-  border: 1px solid #d1d5db;
-  padding: 4px 12px;
-  border-radius: 6px;
+  border: 1px solid #d4d4d4;
+  padding: 5px 12px;
+  border-radius: 4px;
   cursor: pointer;
   font-size: 0.85rem;
+  color: #525252;
+  transition: background 0.15s, color 0.15s;
 }
+.btn-logout:hover { background: #f5f5f5; color: #0a0a0a; }
+
 .main-content {
-  max-width: 980px;
+  max-width: 960px;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 28px 20px;
 }
 
 @media (max-width: 640px) {
@@ -189,13 +214,13 @@ async function logout() {
     flex-direction: column;
     align-items: stretch;
     gap: 10px;
+    padding: 12px 16px;
   }
-
+  .menu-row { padding: 0 16px; }
   .challenge-select {
     width: 100%;
     min-width: 0;
   }
-
   .right-actions {
     justify-content: flex-end;
   }

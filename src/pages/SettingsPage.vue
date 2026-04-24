@@ -163,110 +163,134 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.settings-wrap { display: grid; gap: 16px; }
-h1 { margin-bottom: 2px; }
+.settings-wrap { display: grid; gap: 20px; }
+h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
 .card {
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 20px;
 }
-h2 { margin-bottom: 12px; font-size: 1.1rem; }
+h2 { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #525252; margin-bottom: 16px; }
 .add-form {
   display: flex;
   gap: 8px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
 .add-form input {
   flex: 1;
   padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #0a0a0a;
 }
+.add-form input:focus { outline: 2px solid #1a3a5c; outline-offset: 1px; }
 .add-form button {
-  padding: 8px 16px;
-  background: #2563eb;
+  padding: 8px 18px;
+  background: #1a3a5c;
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: background 0.15s;
 }
-.empty { color: #aaa; text-align: center; padding: 20px 0; }
+.add-form button:hover { background: #0f2540; }
+.empty { color: #a3a3a3; text-align: center; padding: 24px 0; font-size: 0.88rem; }
 .challenge-card {
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 12px;
-  margin-bottom: 8px;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
+  padding: 12px 14px;
+  margin-bottom: 6px;
+  transition: background 0.15s;
 }
-.challenge-card.inactive { opacity: 0.55; }
+.challenge-card:hover { background: #fafafa; }
+.challenge-card.inactive { opacity: 0.5; }
 .card-info { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
-.card-title { font-weight: 600; }
-.card-badge { font-size: 0.75rem; padding: 2px 8px; border-radius: 12px; }
-.card-badge.active { background: #dcfce7; color: #16a34a; }
-.card-badge.archived { background: #f3f4f6; color: #888; }
-.card-actions { display: flex; gap: 8px; }
+.card-title { font-weight: 600; font-size: 0.92rem; color: #0a0a0a; }
+.card-badge { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.04em; }
+.card-badge.active { background: #0a0a0a; color: #fff; }
+.card-badge.archived { background: #f0f0f0; color: #737373; }
+.card-actions { display: flex; gap: 6px; }
 .btn-sm {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   padding: 4px 10px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
   background: #fff;
-  color: #555;
+  color: #525252;
   cursor: pointer;
+  transition: all 0.15s;
 }
+.btn-sm:hover { background: #f5f5f5; color: #0a0a0a; }
 .btn-delete {
-  font-size: 0.75rem;
-  padding: 3px 10px;
-  border: 1px solid #fca5a5;
-  border-radius: 6px;
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
   background: #fff;
-  color: #dc2626;
+  color: #737373;
   cursor: pointer;
+  transition: all 0.15s;
 }
+.btn-delete:hover { border-color: #0a0a0a; color: #0a0a0a; }
 .upload-form {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .upload-form input:first-child {
   flex: 1;
   min-width: 120px;
   padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 8px;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #0a0a0a;
 }
+.upload-form input:first-child:focus { outline: 2px solid #1a3a5c; outline-offset: 1px; }
 .upload-form button {
-  padding: 8px 16px;
-  background: #2563eb;
+  padding: 8px 18px;
+  background: #1a3a5c;
   color: #fff;
   border: none;
-  border-radius: 8px;
+  border-radius: 4px;
   cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  transition: background 0.15s;
 }
-.msg { font-size: 0.9rem; color: #2563eb; margin-bottom: 10px; }
+.upload-form button:hover:not(:disabled) { background: #0f2540; }
+.upload-form button:disabled { opacity: 0.5; cursor: not-allowed; }
+.msg { font-size: 0.88rem; color: #1a3a5c; margin-bottom: 10px; font-weight: 500; }
 .stamp-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(120px, 1fr));
-  gap: 12px;
+  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
+  gap: 10px;
 }
 .stamp-card {
   text-align: center;
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
+  border: 1px solid #e5e5e5;
+  border-radius: 4px;
   padding: 12px 8px;
+  transition: background 0.15s;
 }
+.stamp-card:hover { background: #fafafa; }
 .stamp-card img {
-  width: 70px;
-  height: 70px;
+  width: 64px;
+  height: 64px;
   object-fit: contain;
 }
 .stamp-name {
   display: block;
-  font-size: 0.85rem;
-  margin: 6px 0;
-  color: #333;
+  font-size: 0.8rem;
+  margin: 6px 0 4px;
+  color: #0a0a0a;
+  font-weight: 500;
 }
 </style>

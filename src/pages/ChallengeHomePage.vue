@@ -15,6 +15,7 @@ const todayRecord = ref(null)
 const selectedStampId = ref(null)
 const selectionMode = ref('random')
 const selectedDate = ref(dayjs().format('YYYY-MM-DD'))
+const noteInput = ref('')
 const loading = ref(true)
 const saving = ref(false)
 const message = ref('')
@@ -148,12 +149,14 @@ async function achieve() {
     stamp_id: stampId,
     stamp_snapshot_path: stamp?.image_path || null,
     selection_mode: mode,
+    note: noteInput.value.trim() || null,
   })
 
   if (error) {
     message.value = `오류: ${error.message}`
   } else {
     message.value = selectedDateRecord.value ? '🔄 기존 기록을 새 도장으로 업데이트했어요!' : '🎉 달성 완료!'
+    noteInput.value = ''
     await fetchData()
   }
 
@@ -183,17 +186,17 @@ onMounted(fetchData)
 
       <div class="stats-grid">
         <div class="stat-card">
-          <div class="label">올해 성공 횟수</div>
+          <div class="label">This Year</div>
           <div class="value">{{ yearCount }}회</div>
         </div>
         <div class="stat-card">
-          <div class="label">이번 달 성공 횟수</div>
+          <div class="label">This Month</div>
           <div class="value">{{ monthCount }}회</div>
         </div>
       </div>
 
       <section class="card">
-        <h3>지난 주 + 이번 주</h3>
+        <h3>Current Record</h3>
         <div class="two-week-grid">
           <div v-for="d in twoWeekDays" :key="d" class="day-cell">
             <div class="day-date">{{ dayjs(d).format('M/D ddd') }}</div>
@@ -207,8 +210,7 @@ onMounted(fetchData)
       </section>
 
       <section class="card">
-        <h3>오늘 달성</h3>
-        <p class="today">오늘: {{ today }}</p>
+        <h3>Accomplish</h3>
 
         <div v-if="todayRecord && selectedDate === today" class="done-notice">
           ✅ 오늘은 챌린지를 달성했습니다.
@@ -228,8 +230,8 @@ onMounted(fetchData)
         </div>
 
         <div class="toggle">
-          <button :class="{ active: selectionMode === 'random' }" @click="selectionMode = 'random'">🎲 랜덤</button>
-          <button :class="{ active: selectionMode === 'manual' }" @click="selectionMode = 'manual'">👆 직접 선택</button>
+          <button :class="{ active: selectionMode === 'random' }" @click="selectionMode = 'random'">랜덤 도장</button>
+          <button :class="{ active: selectionMode === 'manual' }" @click="selectionMode = 'manual'">직접 선택</button>
         </div>
 
         <div v-if="selectionMode === 'manual'" class="stamp-grid">
@@ -245,8 +247,16 @@ onMounted(fetchData)
           </button>
         </div>
 
+        <textarea
+          v-model="noteInput"
+          class="note-input"
+          placeholder="한 마디 (선택사항)"
+          rows="2"
+          :disabled="saving"
+        />
+
         <button class="achieve-btn" :disabled="saving" @click="achieve">
-          {{ saving ? '기록 중...' : '🏆 달성!' }}
+          {{ saving ? '기록 중...' : 'Complete!' }}
         </button>
 
         <p v-if="message" class="message">{{ message }}</p>
@@ -256,124 +266,154 @@ onMounted(fetchData)
 </template>
 
 <style scoped>
-.home-wrap { display: grid; gap: 16px; }
-.title { margin: 2px 0 4px; }
+.home-wrap { display: grid; gap: 20px; }
+.title { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
 .empty-box {
-  background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 20px;
+  background: #fafafa;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 32px 20px;
   text-align: center;
-  color: #777;
+  color: #a3a3a3;
+  font-size: 0.9rem;
 }
 .stats-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  gap: 12px;
 }
 .stat-card {
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 14px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 16px 18px;
 }
-.label { color: #777; font-size: 0.85rem; }
-.value { font-size: 1.4rem; font-weight: 700; }
+.label { color: #737373; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+.value { font-size: 1.6rem; font-weight: 700; color: #0a0a0a; letter-spacing: -0.03em; }
 .card {
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 18px;
 }
-.card h3 { margin-bottom: 10px; }
+.card h3 { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #525252; margin-bottom: 14px; }
 .two-week-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 8px;
+  gap: 6px;
 }
 .day-cell {
-  min-height: 128px;
-  border: 1px solid #f1f5f9;
-  border-radius: 8px;
-  padding: 8px;
+  min-height: 130px;
+  border: 1px solid #f0f0f0;
+  border-radius: 4px;
+  padding: 2px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  background: #fafafa;
 }
-.day-date { font-size: 0.72rem; color: #666; margin-bottom: 10px; }
-.tiny-stamp { width: 56px; height: 56px; object-fit: contain; }
-.today { color: #666; margin-bottom: 12px; }
+.day-date { font-size: 0.68rem; color: #a3a3a3; margin-bottom: 4px; font-weight: 500; }
+.tiny-stamp { width: 100px; height: 100px; object-fit: contain; }
+.today { color: #737373; margin-bottom: 12px; font-size: 0.88rem; }
 .done-notice {
-  background: #f0fdf4;
-  border: 1px solid #bbf7d0;
-  border-radius: 10px;
+  background: #f5f5f5;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
   padding: 12px;
   text-align: center;
-  color: #16a34a;
+  color: #0a0a0a;
   margin-bottom: 12px;
+  font-size: 0.9rem;
   font-weight: 500;
 }
 .date-picker {
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
+  margin-bottom: 14px;
 }
-.date-picker label { color: #666; font-size: 0.9rem; white-space: nowrap; }
+.date-picker label { color: #525252; font-size: 0.85rem; white-space: nowrap; font-weight: 500; }
 .date-picker input {
   flex: 1;
-  padding: 8px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
+  padding: 7px 10px;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
   font-size: 0.9rem;
+  color: #0a0a0a;
 }
+.date-picker input:focus { outline: 2px solid #1a3a5c; outline-offset: 1px; }
 .toggle {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .toggle button {
-  border: 1px solid #d1d5db;
+  border: 1px solid #d4d4d4;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 9px;
   cursor: pointer;
+  font-size: 0.88rem;
+  color: #525252;
+  font-weight: 500;
+  transition: all 0.15s;
 }
-.toggle button.active { border-color: #2563eb; color: #2563eb; background: #eff6ff; }
+.toggle button.active { border-color: #1a3a5c; color: #1a3a5c; background: #f0f4f8; font-weight: 700; }
 .stamp-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
   gap: 8px;
-  margin-bottom: 10px;
+  margin-bottom: 12px;
 }
 .stamp-item {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #e5e5e5;
   background: #fff;
-  border-radius: 8px;
+  border-radius: 4px;
   padding: 8px;
   cursor: pointer;
   display: flex;
   flex-direction: column;
   align-items: center;
+  transition: all 0.15s;
 }
-.stamp-item.selected { border-color: #2563eb; background: #eff6ff; }
-.stamp-item img { width: 54px; height: 54px; object-fit: contain; }
-.stamp-item span { font-size: 0.75rem; color: #555; }
+.stamp-item:hover { border-color: #a3a3a3; }
+.stamp-item.selected { border-color: #1a3a5c; background: #f0f4f8; }
+.stamp-item img { width: 52px; height: 52px; object-fit: contain; }
+.stamp-item span { font-size: 0.73rem; color: #525252; margin-top: 4px; }
+.note-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
+  font-size: 0.9rem;
+  color: #0a0a0a;
+  resize: none;
+  font-family: inherit;
+  line-height: 1.5;
+  margin-bottom: 10px;
+}
+.note-input:focus { outline: 2px solid #1a3a5c; outline-offset: 1px; }
+.note-input::placeholder { color: #a3a3a3; }
 .achieve-btn {
   width: 100%;
   padding: 12px;
   border: none;
-  border-radius: 10px;
-  background: #2563eb;
+  border-radius: 4px;
+  background: #1a3a5c;
   color: #fff;
   cursor: pointer;
-  font-size: 1rem;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
 }
-.achieve-btn:disabled { opacity: 0.6; }
-.message { margin-top: 8px; text-align: center; color: #2563eb; }
+.achieve-btn:hover:not(:disabled) { background: #0f2540; }
+.achieve-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+.message { margin-top: 10px; text-align: center; color: #1a3a5c; font-size: 0.9rem; font-weight: 500; }
 @media (max-width: 640px) {
   .stats-grid { grid-template-columns: 1fr; }
+  .two-week-grid { gap: 3px; }
 }
 </style>

@@ -68,7 +68,6 @@ watch(() => route.query.c, async (value) => {
 
 <template>
   <div v-if="challenge">
-    <h2>🔢 {{ challenge.title }} - 회차 기록</h2>
 
     <div v-if="records.length === 0" class="empty">아직 기록이 없습니다.</div>
 
@@ -82,7 +81,6 @@ watch(() => route.query.c, async (value) => {
         />
         <div class="round-info">
           <span class="round-date">{{ dayjs(r.achieved_on).format('M월 D일 (ddd)') }}</span>
-          <span class="round-mode">{{ r.selection_mode === 'random' ? '🎲 랜덤' : '👆 직접' }}</span>
           <span v-if="r.note" class="round-note">{{ r.note }}</span>
         </div>
         <button class="btn-del" @click="deleteRecord(r.id)">삭제</button>
@@ -94,27 +92,31 @@ watch(() => route.query.c, async (value) => {
 </template>
 
 <style scoped>
-h2 { margin-bottom: 16px; }
-.empty { color: #aaa; text-align: center; padding: 40px 0; }
-.round-list { display: flex; flex-direction: column; gap: 10px; }
+h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 18px; }
+.empty { color: #a3a3a3; text-align: center; padding: 48px 0; font-size: 0.9rem; }
+.round-list { display: flex; flex-direction: column; gap: 8px; }
 .round-card {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 14px;
   background: #fff;
-  border: 1px solid #e5e7eb;
-  border-radius: 10px;
-  padding: 12px 16px;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 8px 12px;
+  transition: background 0.15s;
 }
+.round-card:hover { background: #fafafa; }
 .round-no {
   font-weight: 700;
   font-size: 1rem;
-  color: #2563eb;
-  min-width: 56px;
+  letter-spacing: 0.04em;
+  color: #1a3a5c;
+  min-width: 48px;
+  text-transform: uppercase;
 }
 .round-stamp {
-  width: 48px;
-  height: 48px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
 }
 .round-info {
@@ -122,24 +124,28 @@ h2 { margin-bottom: 16px; }
   flex-direction: column;
   gap: 2px;
 }
-.round-date { font-size: 0.9rem; color: #333; }
-.round-mode { font-size: 0.8rem; color: #888; }
-.round-note { font-size: 0.8rem; color: #666; font-style: italic; }
+.round-date { font-size: 0.88rem; color: #0a0a0a; font-weight: 500; }
+.round-mode { font-size: 0.78rem; color: #a3a3a3; }
+.round-note { font-size: 0.78rem; color: #737373; font-style: italic; }
 .btn-del {
   margin-left: auto;
   font-size: 0.75rem;
   padding: 4px 10px;
-  border: 1px solid #fca5a5;
-  border-radius: 6px;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
   background: #fff;
-  color: #dc2626;
+  color: #737373;
   cursor: pointer;
+  transition: all 0.15s;
 }
+.btn-del:hover { border-color: #0a0a0a; color: #0a0a0a; }
 .back-link {
   display: inline-block;
-  margin-top: 20px;
-  color: #2563eb;
+  margin-top: 24px;
+  color: #1a3a5c;
   text-decoration: none;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
+  font-weight: 500;
 }
+.back-link:hover { text-decoration: underline; }
 </style>
