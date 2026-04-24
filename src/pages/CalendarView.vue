@@ -1,11 +1,12 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
-import { useRoute } from 'vue-router'
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { supabase } from '../lib/supabase.js'
 import dayjs from 'dayjs'
 
 const route = useRoute()
-const challengeId = route.params.id
+const router = useRouter()
+const challengeId = ref(String(route.query.c || ''))
 
 const challenge = ref(null)
 const records = ref([])
@@ -17,17 +18,37 @@ function stampUrl(path) {
 }
 
 async function fetchData() {
+  if (!challengeId.value) {
+    const { data } = await supabase
+      .from('challenges')
+      .select('id')
+      .eq('is_active', true)
+      .order('created_at', { ascending: false })
+      .limit(1)
+
+    if (data && data[0]?.id) {
+      challengeId.value = data[0].id
+      await router.replace({ name: 'Calendar', query: { c: challengeId.value } })
+    }
+  }
+
+  if (!challengeId.value) {
+    challenge.value = null
+    records.value = []
+    return
+  }
+
   const { data: c } = await supabase
     .from('challenges')
     .select('*')
-    .eq('id', challengeId)
+    .eq('id', challengeId.value)
     .single()
   challenge.value = c
 
   const { data: r } = await supabase
     .from('challenge_records')
     .select('*, stamps(name, image_path)')
-    .eq('challenge_id', challengeId)
+    .eq('challenge_id', challengeId.value)
     .order('achieved_on')
   records.value = r || []
 }
@@ -68,6 +89,11 @@ async function deleteRecord(id) {
 }
 
 onMounted(fetchData)
+
+watch(() => route.query.c, async (value) => {
+  challengeId.value = String(value || '')
+  await fetchData()
+})
 </script>
 
 <template>
@@ -101,7 +127,7 @@ onMounted(fetchData)
       </div>
     </div>
 
-    <router-link :to="`/challenge/${challengeId}`" class="back-link">← 돌아가기</router-link>
+    <router-link :to="{ name: 'Home', query: challengeId ? { c: challengeId } : {} }" class="back-link">← 돌아가기</router-link>
   </div>
 </template>
 
@@ -134,10 +160,10 @@ h2 { margin-bottom: 16px; }
   padding: 6px 0;
 }
 .cal-cell {
-  min-height: 64px;
+  min-height: 126px;
   border: 1px solid #f3f4f6;
   border-radius: 6px;
-  padding: 4px;
+  padding: 8px 6px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -150,10 +176,10 @@ h2 { margin-bottom: 16px; }
   align-items: center;
 }
 .cal-stamp {
-  width: 36px;
-  height: 36px;
+  width: 60px;
+  height: 60px;
   object-fit: contain;
-  margin-top: 2px;
+  margin-top: 8px;
 }
 .btn-del-small {
   position: absolute;

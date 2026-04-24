@@ -2,21 +2,24 @@ import { createRouter, createWebHistory } from 'vue-router'
 import { supabase } from '../lib/supabase.js'
 
 import LoginPage from '../pages/LoginPage.vue'
-import HomePage from '../pages/HomePage.vue'
-import ChallengeManagePage from '../pages/ChallengeManagePage.vue'
-import ChallengePage from '../pages/ChallengePage.vue'
-import StampsPage from '../pages/StampsPage.vue'
+import HomePage from '../pages/ChallengeHomePage.vue'
 import CalendarView from '../pages/CalendarView.vue'
 import RoundView from '../pages/RoundView.vue'
+import SettingsPage from '../pages/SettingsPage.vue'
 
 const routes = [
   { path: '/login', name: 'Login', component: LoginPage, meta: { requiresAuth: false } },
   { path: '/', name: 'Home', component: HomePage },
-  { path: '/challenges', name: 'ChallengeManage', component: ChallengeManagePage },
-  { path: '/challenge/:id', name: 'Challenge', component: ChallengePage },
-  { path: '/challenge/:id/calendar', name: 'Calendar', component: CalendarView },
-  { path: '/challenge/:id/rounds', name: 'Rounds', component: RoundView },
-  { path: '/stamps', name: 'Stamps', component: StampsPage },
+  { path: '/calendar', name: 'Calendar', component: CalendarView },
+  { path: '/rounds', name: 'Rounds', component: RoundView },
+  { path: '/settings', name: 'Settings', component: SettingsPage },
+
+  // 구 경로 호환 리다이렉트
+  { path: '/challenges', redirect: { name: 'Settings' } },
+  { path: '/stamps', redirect: { name: 'Settings' } },
+  { path: '/challenge/:id', redirect: to => ({ name: 'Home', query: { c: to.params.id } }) },
+  { path: '/challenge/:id/calendar', redirect: to => ({ name: 'Calendar', query: { c: to.params.id } }) },
+  { path: '/challenge/:id/rounds', redirect: to => ({ name: 'Rounds', query: { c: to.params.id } }) },
 ]
 
 const router = createRouter({
