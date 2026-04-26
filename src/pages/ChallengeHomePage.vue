@@ -300,21 +300,38 @@ onMounted(fetchData)
 .two-week-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  gap: 6px;
+  gap: clamp(2px, 0.5vw, 6px);
 }
 .day-cell {
-  min-height: 130px;
+  min-width: 0;
+  min-height: clamp(66px, 11vw, 130px);
+  aspect-ratio: 1 / 1.15;
   border: 1px solid #f0f0f0;
   border-radius: 4px;
-  padding: 2px;
+  padding: clamp(2px, 0.35vw, 4px);
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   background: #fafafa;
+  overflow: hidden;
 }
-.day-date { font-size: 0.68rem; color: #a3a3a3; margin-bottom: 4px; font-weight: 500; }
-.tiny-stamp { width: 100px; height: 100px; object-fit: contain; }
+.day-date {
+  font-size: clamp(0.52rem, 1.5vw, 0.68rem);
+  color: #a3a3a3;
+  margin-bottom: clamp(2px, 0.5vw, 4px);
+  font-weight: 500;
+  line-height: 1.05;
+}
+.tiny-stamp {
+  width: min(100%, clamp(32px, 10.4vw, 92px));
+  height: auto;
+  max-height: clamp(32px, 10.4vw, 92px);
+  margin-top: auto;
+  margin-bottom: auto;
+  object-fit: contain;
+}
 .today { color: #737373; margin-bottom: 12px; font-size: 0.88rem; }
 .done-notice {
   background: #f5f5f5;
@@ -414,6 +431,19 @@ onMounted(fetchData)
 .message { margin-top: 10px; text-align: center; color: #1a3a5c; font-size: 0.9rem; font-weight: 500; }
 @media (max-width: 640px) {
   .stats-grid { grid-template-columns: 1fr; }
-  .two-week-grid { gap: 3px; }
+  .two-week-grid { gap: 2px; }
+  .day-cell {
+    aspect-ratio: 1 / 1.22;
+    min-height: 58px;
+    padding: 2px 1px;
+  }
+  .day-date {
+    font-size: 0.5rem;
+    margin-bottom: 2px;
+  }
+  .tiny-stamp {
+    width: min(100%, 10.5vw);
+    max-height: 10.5vw;
+  }
 }
 </style>

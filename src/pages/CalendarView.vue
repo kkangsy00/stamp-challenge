@@ -154,41 +154,54 @@ h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, 1fr);
-  gap: 2px;
+  gap: clamp(1px, 0.35vw, 4px);
 }
 .cal-header {
   text-align: center;
-  font-size: 0.75rem;
+  font-size: clamp(0.56rem, 1.6vw, 0.75rem);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: #a3a3a3;
-  padding: 8px 0;
+  padding: clamp(4px, 1vw, 8px) 0;
 }
 .cal-cell {
-  min-height: 150px;
+  min-width: 0;
+  min-height: clamp(70px, 12vw, 150px);
+  aspect-ratio: 1 / 1.2;
   border: 1px solid #f0f0f0;
   border-radius: 4px;
-  padding: 2px 0;
+  padding: clamp(2px, 0.4vw, 4px) 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   background: #fff;
+  overflow: hidden;
   transition: background 0.15s;
 }
 .cal-cell:hover { background: #fafafa; }
-.cal-date { font-size: 0.85rem; color: #a3a3a3; font-weight: 500; margin-bottom: 4px; }
+.cal-date {
+  font-size: clamp(0.62rem, 1.9vw, 0.85rem);
+  color: #a3a3a3;
+  font-weight: 500;
+  margin-bottom: clamp(2px, 0.6vw, 4px);
+  line-height: 1;
+}
 .cal-stamp-wrap {
   position: relative;
   display: flex;
   flex-direction: column;
   align-items: center;
+  width: 100%;
+  min-width: 0;
   flex: 1;
   justify-content: center;
+  padding-bottom: clamp(2px, 0.45vw, 6px);
 }
 .cal-stamp {
-  width: 100px;
-  height: 100px;
+  width: min(100%, clamp(36px, 11vw, 96px));
+  height: auto;
+  max-height: clamp(36px, 11vw, 96px);
   object-fit: contain;
 }
 .btn-del-small {
@@ -220,4 +233,36 @@ h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   font-weight: 500;
 }
 .back-link:hover { text-decoration: underline; }
+
+@media (max-width: 640px) {
+  .month-nav {
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+
+  .month-nav button {
+    padding: 4px 10px;
+    font-size: 0.78rem;
+  }
+
+  .cal-grid {
+    gap: 1px;
+  }
+
+  .cal-cell {
+    aspect-ratio: 1 / 1.28;
+    min-height: 64px;
+    padding-top: 3px;
+  }
+
+  .cal-stamp {
+    width: min(100%, 11.5vw);
+    max-height: 11.5vw;
+  }
+
+  .btn-del-small {
+    top: 0;
+    right: 0;
+  }
+}
 </style>
