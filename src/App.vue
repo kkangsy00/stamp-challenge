@@ -81,8 +81,12 @@ async function logout() {
     <header v-if="showChallengeUI" class="top-layout">
       <div class="top-actions-row">
         <div class="right-actions">
-          <router-link to="/settings" class="settings-link">Settings</router-link>
-          <button @click="logout" class="btn-logout">Logout</button>
+          <router-link to="/settings" class="icon-button settings-button" title="Settings">
+            <FontAwesomeIcon icon="cog" />
+          </router-link>
+          <button @click="logout" class="icon-button logout-button" title="Logout">
+            <FontAwesomeIcon icon="sign-out-alt" />
+          </button>
         </div>
       </div>
 
@@ -179,22 +183,35 @@ async function logout() {
 
 .right-actions {
   display: flex;
-  gap: 10px;
+  gap: 12px;
   align-items: center;
 }
 
-.settings-link {
-  text-decoration: none;
-  color: #1a3a5c;
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 5px 12px;
-  border: 1px solid #d9e4ef;
-  border-radius: 4px;
-  background: #fff;
-  transition: background 0.15s, color 0.15s;
+.icon-button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: none;
+  background: transparent;
+  color: #d9e4ef;
+  font-size: 1.3rem;
+  cursor: pointer;
+  transition: color 0.15s;
 }
-.settings-link:hover { background: #eef3f8; color: #0f2540; }
+
+.icon-button:hover {
+  color: #fff;
+}
+
+.icon-button.settings-button {
+  text-decoration: none;
+}
+
+.icon-button.logout-button {
+  padding: 0;
+}
 
 .menu-row {
   display: flex;
@@ -220,19 +237,6 @@ async function logout() {
   font-weight: 700;
   border-bottom: 2px solid #1a3a5c;
 }
-
-.btn-logout {
-  background: #fff;
-  border: 1px solid #d9e4ef;
-  padding: 5px 12px;
-  border-radius: 4px;
-  cursor: pointer;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #1a3a5c;
-  transition: background 0.15s, color 0.15s;
-}
-.btn-logout:hover { background: #eef3f8; color: #0f2540; }
 
 .main-content {
   max-width: 960px;
