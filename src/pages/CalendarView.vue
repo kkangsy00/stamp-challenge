@@ -175,6 +175,7 @@ h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   display: flex;
   flex-direction: column;
   align-items: center;
+  justify-content: flex-start;
   background: #fff;
   overflow: hidden;
   transition: background 0.15s;
@@ -246,12 +247,12 @@ h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   }
 
   .cal-grid {
-    gap: 1px;
+    gap: 0;
   }
 
   .cal-cell {
-    aspect-ratio: 1 / 1.28;
-    min-height: 64px;
+    aspect-ratio: auto;
+    min-height: 56px;
     padding-top: 3px;
   }
 
