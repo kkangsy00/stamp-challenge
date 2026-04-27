@@ -182,8 +182,6 @@ onMounted(fetchData)
     </template>
 
     <template v-else>
-      <h1 class="title">{{ challenge.title }}</h1>
-
       <div class="stats-grid">
         <div class="stat-card">
           <div class="label">This Year</div>
@@ -267,7 +265,6 @@ onMounted(fetchData)
 
 <style scoped>
 .home-wrap { display: grid; gap: 20px; }
-.title { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
 .empty-box {
   background: #fafafa;
   border: 1px solid #e5e5e5;

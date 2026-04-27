@@ -11,6 +11,7 @@ const selectedChallengeId = ref('')
 
 const menuRoutes = ['Home', 'Calendar', 'Rounds']
 const showChallengeUI = computed(() => session.value && route.name !== 'Login')
+const showChallengeSelect = computed(() => showChallengeUI.value && route.name !== 'Settings')
 
 async function fetchChallenges() {
   const { data } = await supabase
@@ -78,18 +79,19 @@ async function logout() {
 <template>
   <div id="app-wrapper">
     <header v-if="showChallengeUI" class="top-layout">
-      <div class="top-row">
+      <div class="top-actions-row">
+        <div class="right-actions">
+          <router-link to="/settings" class="settings-link">Settings</router-link>
+          <button @click="logout" class="btn-logout">Logout</button>
+        </div>
+      </div>
+
+      <div v-if="showChallengeSelect" class="top-select-row">
         <div class="challenge-select-wrap">
-          <label class="challenge-label">Challenge</label>
           <select v-model="selectedChallengeId" class="challenge-select">
             <option value="" disabled>Select Challenge</option>
             <option v-for="c in challenges" :key="c.id" :value="c.id">{{ c.title }}</option>
           </select>
-        </div>
-
-        <div class="right-actions">
-          <router-link to="/settings" class="settings-link">Settings</router-link>
-          <button @click="logout" class="btn-logout">Logout</button>
         </div>
       </div>
 
@@ -108,40 +110,66 @@ async function logout() {
 
 <style scoped>
 .top-layout {
-  background: #fff;
+  background: #1a3a5c;
   border-bottom: 1px solid #0a0a0a;
+  padding-top: 10px;
 }
 
-.top-row {
+.top-actions-row {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
-  padding: 14px 24px;
+  padding: 4px 24px 10px;
+  background: #1a3a5c;
+  border-bottom: 1px solid #0f2540;
+}
+
+.top-select-row {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 12px 24px 10px;
+  background: #fff;
 }
 
 .challenge-select-wrap {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: 10px;
+  width: min(100%, 800px);
 }
 
-.challenge-label {
-  font-size: 0.8rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: #525252;
+.challenge-select-wrap::after {
+  content: '▼';
+  position: absolute;
+  right: 24px;
+  top: 50%;
+  transform: translateY(-50%);
+  font-size: 0.92rem;
+  font-weight: 700;
+  color: #111;
+  z-index: 2;
+  pointer-events: none;
 }
 
 .challenge-select {
-  min-width: 200px;
-  padding: 6px 10px;
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  padding: 8px 44px;
   border: 1px solid #d4d4d4;
-  border-radius: 4px;
+  border-radius: 999px;
   background: #fff;
-  font-size: 0.9rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  font-family: 'Avenir Next', 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif;
+  letter-spacing: 0.2em;
   color: #0a0a0a;
-  appearance: auto;
+  text-align: center;
+  text-align-last: center;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
   cursor: pointer;
 }
 .challenge-select:focus {
@@ -157,20 +185,22 @@ async function logout() {
 
 .settings-link {
   text-decoration: none;
-  color: #0a0a0a;
+  color: #1a3a5c;
   font-size: 0.85rem;
-  font-weight: 500;
+  font-weight: 600;
   padding: 5px 12px;
-  border: 1px solid #d4d4d4;
+  border: 1px solid #d9e4ef;
   border-radius: 4px;
-  transition: background 0.15s;
+  background: #fff;
+  transition: background 0.15s, color 0.15s;
 }
-.settings-link:hover { background: #f5f5f5; }
+.settings-link:hover { background: #eef3f8; color: #0f2540; }
 
 .menu-row {
   display: flex;
   gap: 0;
   padding: 0 24px;
+  background: #fff;
 }
 
 .menu-row a {
@@ -192,16 +222,17 @@ async function logout() {
 }
 
 .btn-logout {
-  background: none;
-  border: 1px solid #d4d4d4;
+  background: #fff;
+  border: 1px solid #d9e4ef;
   padding: 5px 12px;
   border-radius: 4px;
   cursor: pointer;
   font-size: 0.85rem;
-  color: #525252;
+  font-weight: 600;
+  color: #1a3a5c;
   transition: background 0.15s, color 0.15s;
 }
-.btn-logout:hover { background: #f5f5f5; color: #0a0a0a; }
+.btn-logout:hover { background: #eef3f8; color: #0f2540; }
 
 .main-content {
   max-width: 960px;
@@ -210,19 +241,24 @@ async function logout() {
 }
 
 @media (max-width: 640px) {
-  .top-row {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+  .top-actions-row {
     padding: 12px 16px;
+    justify-content: flex-end;
   }
+  .top-select-row { padding: 10px 16px 8px; }
   .menu-row { padding: 0 16px; }
+  .challenge-select-wrap {
+    width: 100%;
+  }
+  .challenge-select-wrap::after {
+    right: 14px;
+    font-size: 0.88rem;
+  }
   .challenge-select {
     width: 100%;
     min-width: 0;
-  }
-  .right-actions {
-    justify-content: flex-end;
+    font-size: 1rem;
+    padding: 10px 38px;
   }
 }
 </style>

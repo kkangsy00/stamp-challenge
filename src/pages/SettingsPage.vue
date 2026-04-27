@@ -164,8 +164,6 @@ onMounted(async () => {
     <h1>설정</h1>
 
     <section class="card">
-      <h2>챌린지 관리</h2>
-
       <form @submit.prevent="addChallenge" class="add-form">
         <input v-model="newTitle" placeholder="새 챌린지 이름" :disabled="challengeLoading" />
         <button type="submit" :disabled="challengeLoading">추가</button>
@@ -222,8 +220,6 @@ onMounted(async () => {
     </section>
 
     <section class="card">
-      <h2>도장 관리</h2>
-
       <div class="upload-form">
         <input v-model="newName" placeholder="도장 이름" :disabled="uploading" />
         <input type="file" ref="fileInput" accept="image/*" :disabled="uploading" />
@@ -254,7 +250,6 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   border-radius: 6px;
   padding: 20px;
 }
-h2 { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #525252; margin-bottom: 16px; }
 .add-form {
   display: flex;
   gap: 8px;
@@ -346,13 +341,34 @@ h2 { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em; text-transfor
 .upload-form input:first-child {
   flex: 1;
   min-width: 120px;
-  padding: 8px 12px;
+  height: 38px;
+  padding: 0 12px;
   border: 1px solid #d4d4d4;
   border-radius: 4px;
   font-size: 0.9rem;
   color: #0a0a0a;
 }
 .upload-form input:first-child:focus { outline: 2px solid #1a3a5c; outline-offset: 1px; }
+.upload-form input[type="file"] {
+  height: 38px;
+  border: 1px solid #d4d4d4;
+  border-radius: 4px;
+  background: #fff;
+  color: #525252;
+  font-size: 0.88rem;
+  padding: 0;
+}
+.upload-form input[type="file"]::file-selector-button {
+  height: 100%;
+  padding: 0 12px;
+  border: none;
+  border-right: 1px solid #d4d4d4;
+  background: #f5f5f5;
+  color: #0a0a0a;
+  font-size: 0.88rem;
+  font-weight: 500;
+  cursor: pointer;
+}
 .upload-form button {
   padding: 8px 18px;
   background: #1a3a5c;
