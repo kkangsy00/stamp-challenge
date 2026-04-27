@@ -155,7 +155,7 @@ async function achieve() {
   if (error) {
     message.value = `오류: ${error.message}`
   } else {
-    message.value = selectedDateRecord.value ? '🔄 기존 기록을 새 도장으로 업데이트했어요!' : '🎉 달성 완료!'
+    message.value = selectedDateRecord.value ? '기존 기록을 새 도장으로 업데이트했어요!' : '달성 완료!'
     noteInput.value = ''
     await fetchData()
   }
@@ -211,10 +211,10 @@ onMounted(fetchData)
         <h3>Accomplish</h3>
 
         <div v-if="todayRecord && selectedDate === today" class="done-notice">
-          ✅ 오늘은 챌린지를 달성했습니다.
+          오늘은 챌린지를 달성했습니다.
         </div>
         <div v-else-if="selectedDateRecord" class="done-notice">
-          ✅ 선택한 날짜는 이미 달성했습니다. 다시 찍으면 덮어씁니다.
+          선택한 날짜는 이미 달성했습니다. 다시 찍으면 덮어씁니다.
         </div>
 
         <div class="date-picker">
@@ -248,7 +248,7 @@ onMounted(fetchData)
         <textarea
           v-model="noteInput"
           class="note-input"
-          placeholder="한 마디 (선택사항)"
+          placeholder="Memo"
           rows="2"
           :disabled="saving"
         />
@@ -428,10 +428,10 @@ onMounted(fetchData)
 .message { margin-top: 10px; text-align: center; color: #1a3a5c; font-size: 0.9rem; font-weight: 500; }
 @media (max-width: 640px) {
   .stats-grid { grid-template-columns: 1fr; }
-  .two-week-grid { gap: 2px; }
+  .two-week-grid { gap: 1px; }
   .day-cell {
-    aspect-ratio: 1 / 1.22;
-    min-height: 58px;
+    aspect-ratio: auto;
+    min-height: 54px;
     padding: 2px 1px;
   }
   .day-date {

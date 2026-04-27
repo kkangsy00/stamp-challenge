@@ -35,8 +35,7 @@ supabase.auth.getSession().then(({ data }) => {
 <template>
   <div class="login-page">
     <div class="login-card">
-      <h1>🏅 Stamp Challenge</h1>
-      <p class="subtitle">매일의 도전에 도장을 찍어보세요</p>
+      <h1>Stamp Challenge</h1>
 
       <form @submit.prevent="login" class="login-form">
         <input
