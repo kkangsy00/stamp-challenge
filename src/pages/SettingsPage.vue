@@ -12,8 +12,11 @@ const challengeMessage = ref('')
 
 const stamps = ref([])
 const uploading = ref(false)
+const replacingStampId = ref(null)
+const permanentlyDeletingStampId = ref(null)
 const newName = ref('')
 const fileInput = ref(null)
+const stampFileInputs = ref({})
 const message = ref('')
 
 async function fetchChallenges() {
@@ -98,6 +101,7 @@ async function fetchStamps() {
   const { data } = await supabase
     .from('stamps')
     .select('*')
+    .order('is_active', { ascending: false })
     .order('created_at', { ascending: false })
   stamps.value = data || []
 }
@@ -105,6 +109,24 @@ async function fetchStamps() {
 function stampUrl(path) {
   const { data } = supabase.storage.from('stamps').getPublicUrl(path)
   return data.publicUrl
+}
+
+function setStampFileInputRef(stampId, el) {
+  if (el) {
+    stampFileInputs.value[stampId] = el
+    return
+  }
+
+  delete stampFileInputs.value[stampId]
+}
+
+function openReplaceDialog(stampId) {
+  stampFileInputs.value[stampId]?.click()
+}
+
+function buildStampFilePath(userId, file) {
+  const ext = file.name.split('.').pop()
+  return `${userId}/${Date.now()}.${ext}`
 }
 
 async function uploadStamp() {
@@ -118,8 +140,7 @@ async function uploadStamp() {
   message.value = ''
 
   const { data: { user } } = await supabase.auth.getUser()
-  const ext = file.name.split('.').pop()
-  const filePath = `${user.id}/${Date.now()}.${ext}`
+  const filePath = buildStampFilePath(user.id, file)
 
   const { error: upErr } = await supabase.storage.from('stamps').upload(filePath, file)
   if (upErr) {
@@ -132,12 +153,12 @@ async function uploadStamp() {
     user_id: user.id,
     name: newName.value.trim(),
     image_path: filePath,
+    is_active: true,
   })
 
   if (dbErr) {
     message.value = 'DB 저장 실패: ' + dbErr.message
   } else {
-    message.value = '✅ 도장 추가 완료!'
     newName.value = ''
     fileInput.value.value = ''
     await fetchStamps()
@@ -147,9 +168,123 @@ async function uploadStamp() {
 }
 
 async function deleteStamp(s) {
-  if (!confirm(`"${s.name}" 도장을 삭제할까요?`)) return
-  await supabase.storage.from('stamps').remove([s.image_path])
-  await supabase.from('stamps').delete().eq('id', s.id)
+  if (!confirm(`"${s.name}" 도장을 삭제할까요? 기존 기록 이미지는 그대로 유지돼요.`)) return
+
+  const { error } = await supabase
+    .from('stamps')
+    .update({ is_active: false })
+    .eq('id', s.id)
+
+  if (error) {
+    message.value = '도장 삭제 실패: ' + error.message
+    return
+  }
+
+  await fetchStamps()
+}
+
+async function restoreStamp(s) {
+  const { error } = await supabase
+    .from('stamps')
+    .update({ is_active: true })
+    .eq('id', s.id)
+
+  if (error) {
+    message.value = '도장 복원 실패: ' + error.message
+    return
+  }
+
+  await fetchStamps()
+}
+
+async function permanentlyDeleteStamp(s) {
+  if (s.is_active) return
+
+  const confirmed = confirm(
+    `"${s.name}" 도장을 영구 삭제할까요?\n\n이 작업은 되돌릴 수 없고, 이 도장을 사용한 기존 기록의 이미지도 모두 제거됩니다.`
+  )
+
+  if (!confirmed) return
+
+  permanentlyDeletingStampId.value = s.id
+  message.value = ''
+
+  const { error: recordError } = await supabase
+    .from('challenge_records')
+    .update({
+      stamp_id: null,
+      stamp_snapshot_path: null,
+    })
+    .eq('stamp_id', s.id)
+
+  if (recordError) {
+    message.value = '기존 기록 정리 실패: ' + recordError.message
+    permanentlyDeletingStampId.value = null
+    return
+  }
+
+  const { error: storageError } = await supabase.storage.from('stamps').remove([s.image_path])
+  if (storageError) {
+    message.value = '스토리지 파일 삭제 실패: ' + storageError.message
+    permanentlyDeletingStampId.value = null
+    return
+  }
+
+  const { error: stampError } = await supabase.from('stamps').delete().eq('id', s.id)
+  if (stampError) {
+    message.value = '도장 영구 삭제 실패: ' + stampError.message
+    permanentlyDeletingStampId.value = null
+    return
+  }
+
+  permanentlyDeletingStampId.value = null
+  await fetchStamps()
+}
+
+async function replaceStampImage(s, event) {
+  const file = event.target?.files?.[0]
+  if (!file) return
+
+  replacingStampId.value = s.id
+  message.value = ''
+
+  const { data: { user } } = await supabase.auth.getUser()
+  const filePath = buildStampFilePath(user.id, file)
+
+  const { error: uploadError } = await supabase.storage.from('stamps').upload(filePath, file)
+  if (uploadError) {
+    message.value = '이미지 변경 실패: ' + uploadError.message
+    replacingStampId.value = null
+    event.target.value = ''
+    return
+  }
+
+  const { error: stampUpdateError } = await supabase
+    .from('stamps')
+    .update({ image_path: filePath })
+    .eq('id', s.id)
+
+  if (stampUpdateError) {
+    message.value = '도장 정보 업데이트 실패: ' + stampUpdateError.message
+    replacingStampId.value = null
+    event.target.value = ''
+    return
+  }
+
+  const { error: recordsUpdateError } = await supabase
+    .from('challenge_records')
+    .update({ stamp_snapshot_path: filePath })
+    .eq('stamp_id', s.id)
+
+  if (recordsUpdateError) {
+    message.value = '기존 기록 이미지 갱신 실패: ' + recordsUpdateError.message
+    replacingStampId.value = null
+    event.target.value = ''
+    return
+  }
+
+  replacingStampId.value = null
+  event.target.value = ''
   await fetchStamps()
 }
 
@@ -231,10 +366,54 @@ onMounted(async () => {
 
       <div v-if="stamps.length === 0" class="empty">아직 등록된 도장이 없습니다.</div>
       <div class="stamp-list">
-        <div v-for="s in stamps" :key="s.id" class="stamp-card">
+        <div v-for="s in stamps" :key="s.id" class="stamp-card" :class="{ inactive: !s.is_active }">
           <img :src="stampUrl(s.image_path)" />
           <span class="stamp-name">{{ s.name }}</span>
-          <button @click="deleteStamp(s)" class="btn-delete">삭제</button>
+          <span class="stamp-badge" :class="s.is_active ? 'active' : 'inactive'">
+            {{ s.is_active ? '사용중' : '삭제됨' }}
+          </span>
+          <div class="stamp-actions">
+            <input
+              :ref="el => setStampFileInputRef(s.id, el)"
+              type="file"
+              class="sr-only"
+              accept="image/*"
+              :disabled="replacingStampId === s.id || permanentlyDeletingStampId === s.id || !s.is_active"
+              @change="replaceStampImage(s, $event)"
+            />
+            <button
+              v-if="s.is_active"
+              @click="openReplaceDialog(s.id)"
+              class="btn-sm"
+              :disabled="replacingStampId === s.id || permanentlyDeletingStampId === s.id"
+            >
+              {{ replacingStampId === s.id ? '변경 중...' : '변경' }}
+            </button>
+            <button
+              v-if="s.is_active"
+              @click="deleteStamp(s)"
+              class="btn-delete"
+              :disabled="replacingStampId === s.id || permanentlyDeletingStampId === s.id"
+            >
+              삭제
+            </button>
+            <template v-else>
+              <button
+                @click="restoreStamp(s)"
+                class="btn-sm"
+                :disabled="replacingStampId === s.id || permanentlyDeletingStampId === s.id"
+              >
+                복원
+              </button>
+              <button
+                @click="permanentlyDeleteStamp(s)"
+                class="btn-permanent-delete"
+                :disabled="replacingStampId === s.id || permanentlyDeletingStampId === s.id"
+              >
+                {{ permanentlyDeletingStampId === s.id ? '삭제 중...' : '영구삭제' }}
+              </button>
+            </template>
+          </div>
         </div>
       </div>
     </section>
@@ -332,6 +511,26 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   transition: all 0.15s;
 }
 .btn-delete:hover { border-color: #0a0a0a; color: #0a0a0a; }
+.btn-permanent-delete {
+  font-size: 0.78rem;
+  padding: 4px 10px;
+  border: 1.5px solid #dc2626;
+  border-radius: 4px;
+  background: #fff;
+  color: #dc2626;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-weight: 500;
+}
+.btn-permanent-delete:hover:not(:disabled) {
+  border-color: #991b1b;
+  color: #991b1b;
+  background: #fef2f2;
+}
+.btn-permanent-delete:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
 .upload-form {
   display: flex;
   flex-wrap: wrap;
@@ -398,6 +597,7 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   transition: background 0.15s;
 }
 .stamp-card:hover { background: #fafafa; }
+.stamp-card.inactive { opacity: 0.65; }
 .stamp-card img {
   width: 64px;
   height: 64px;
@@ -409,5 +609,40 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   margin: 6px 0 4px;
   color: #0a0a0a;
   font-weight: 500;
+}
+.stamp-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 52px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 20px;
+  margin-bottom: 8px;
+}
+.stamp-badge.active {
+  background: #0a0a0a;
+  color: #fff;
+}
+.stamp-badge.inactive {
+  background: #f0f0f0;
+  color: #737373;
+}
+.stamp-actions {
+  display: flex;
+  justify-content: center;
+  gap: 6px;
+}
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 </style>
