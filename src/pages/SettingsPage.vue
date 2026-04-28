@@ -15,12 +15,12 @@ const renamingChallengeId = ref(null)
 const challengeMessage = ref('')
 
 const accentPalette = [
-  "#8ecae6",
-  "#219ebc",
+  "#ef476f",
+  "#ffd166",
+  "#83c5be",
+  '#06d6a0',
+  '#118ab2',
   DEFAULT_ACCENT,
-  '#2a9d8f',
-  '#ffb703',
-  '#fb8500',
 ]
 
 const stamps = ref([])

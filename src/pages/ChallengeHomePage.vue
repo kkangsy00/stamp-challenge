@@ -285,7 +285,7 @@ onMounted(fetchData)
   border-radius: 6px;
   padding: 16px 18px;
 }
-.label { color:  var(--accent); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+.label { color:  var(--accent-dark); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
 .value { font-size: 1.6rem; font-weight: 700; color: #0a0a0a; letter-spacing: -0.03em; }
 .card {
   background: #fff;
@@ -293,7 +293,7 @@ onMounted(fetchData)
   border-radius: 6px;
   padding: 18px;
 }
-.card h3 { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
+.card h3 { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-dark); margin-bottom: 14px; }
 .two-week-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
