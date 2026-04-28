@@ -205,7 +205,7 @@ watch(() => route.query.c, async (value) => {
 }
 .pager-label {
   font-size: 0.84rem;
-  color: #1a3a5c;
+  color: #0a0a0a;
   font-weight: 700;
   letter-spacing: 0.02em;
 }
@@ -217,7 +217,7 @@ watch(() => route.query.c, async (value) => {
   background: #fff;
   border: 1px solid #e5e5e5;
   border-radius: 6px;
-  padding: 8px 12px;
+  padding: 8px 14px;
   transition: background 0.15s;
 }
 .round-card:hover { background: #fafafa; }
@@ -225,7 +225,7 @@ watch(() => route.query.c, async (value) => {
   font-weight: 700;
   font-size: 1rem;
   letter-spacing: 0.04em;
-  color: #1a3a5c;
+  color: #525252;
   min-width: 48px;
   text-transform: uppercase;
 }
@@ -240,7 +240,7 @@ watch(() => route.query.c, async (value) => {
   gap: 2px;
 }
 .round-date { font-size: 0.88rem; color: #0a0a0a; font-weight: 500; }
-.round-note { font-size: 0.78rem; color: #737373; font-style: italic; }
+.round-note { font-size: 0.78rem; color: #737373; }
 .btn-del {
   margin-left: auto;
   font-size: 0.75rem;
@@ -256,7 +256,7 @@ watch(() => route.query.c, async (value) => {
 .back-link {
   display: inline-block;
   margin-top: 24px;
-  color: #1a3a5c;
+  color: var(--accent);
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 500;

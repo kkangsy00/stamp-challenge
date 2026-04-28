@@ -85,11 +85,6 @@ supabase.auth.getSession().then(({ data }) => {
   letter-spacing: -0.02em;
   margin-bottom: 6px;
 }
-.subtitle {
-  color: #a3a3a3;
-  margin-bottom: 28px;
-  font-size: 0.88rem;
-}
 .login-form {
   display: flex;
   flex-direction: column;
@@ -105,12 +100,12 @@ supabase.auth.getSession().then(({ data }) => {
   transition: outline 0.1s;
 }
 .login-form input:focus {
-  outline: 2px solid #1a3a5c;
+  outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 .login-form button {
   padding: 11px;
-  background: #1a3a5c;
+  background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -121,9 +116,8 @@ supabase.auth.getSession().then(({ data }) => {
   transition: background 0.15s;
   margin-top: 2px;
 }
-.login-form button:hover:not(:disabled) { background: #0f2540; }
+.login-form button:hover:not(:disabled) { background: var(--accent-dark); }
 .login-form button:disabled { opacity: 0.5; cursor: not-allowed; }
 .msg { margin-top: 14px; font-size: 0.88rem; font-weight: 500; }
-.success { color: #1a3a5c; }
 .error { color: #0a0a0a; }
 </style>

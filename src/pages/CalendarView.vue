@@ -131,7 +131,6 @@ watch(() => route.query.c, async (value) => {
 </template>
 
 <style scoped>
-h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 18px; }
 .month-nav {
   display: flex;
   align-items: center;
@@ -229,7 +228,7 @@ h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
 .back-link {
   display: inline-block;
   margin-top: 24px;
-  color: #1a3a5c;
+  color: var(--accent);
   text-decoration: none;
   font-size: 0.85rem;
   font-weight: 500;

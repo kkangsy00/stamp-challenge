@@ -9,14 +9,43 @@ const session = ref(null)
 const challenges = ref([])
 const selectedChallengeId = ref('')
 
+const DEFAULT_ACCENT = '#1a3a5c'
+const MONO_ACCENT = '#525252'
 const menuRoutes = ['Home', 'Calendar', 'Rounds']
 const showChallengeUI = computed(() => session.value && route.name !== 'Login')
 const showChallengeSelect = computed(() => showChallengeUI.value && route.name !== 'Settings')
 
+function darkenHex(hex, amount = 28) {
+  const normalized = hex || DEFAULT_ACCENT
+  const raw = normalized.slice(1)
+  const r = Math.max(0, parseInt(raw.slice(0, 2), 16) - amount)
+  const g = Math.max(0, parseInt(raw.slice(2, 4), 16) - amount)
+  const b = Math.max(0, parseInt(raw.slice(4, 6), 16) - amount)
+  return `#${[r, g, b].map(v => v.toString(16).padStart(2, '0')).join('')}`
+}
+
+const isChallengeScopedRoute = computed(() => menuRoutes.includes(String(route.name)))
+
+const currentChallenge = computed(() => {
+  if (!selectedChallengeId.value) return null
+  return challenges.value.find(c => c.id === selectedChallengeId.value) || null
+})
+
+const activeAccent = computed(() => {
+  if (!session.value) return MONO_ACCENT
+  if (!isChallengeScopedRoute.value) return MONO_ACCENT
+  return currentChallenge.value?.accent_color || DEFAULT_ACCENT
+})
+
+const themeStyle = computed(() => ({
+  '--accent': activeAccent.value,
+  '--accent-dark': darkenHex(activeAccent.value),
+}))
+
 async function fetchChallenges() {
   const { data } = await supabase
     .from('challenges')
-    .select('id, title, is_active')
+    .select('id, title, is_active, accent_color')
     .order('created_at', { ascending: false })
 
   challenges.value = (data || []).filter(c => c.is_active)
@@ -77,7 +106,7 @@ async function logout() {
 </script>
 
 <template>
-  <div id="app-wrapper">
+  <div id="app-wrapper" :style="themeStyle">
     <header v-if="showChallengeUI" class="top-layout">
       <div class="top-actions-row">
         <div class="right-actions">
@@ -114,7 +143,7 @@ async function logout() {
 
 <style scoped>
 .top-layout {
-  background: #1a3a5c;
+  background: var(--accent);
   border-bottom: 1px solid #0a0a0a;
   padding-top: 10px;
 }
@@ -124,8 +153,8 @@ async function logout() {
   justify-content: flex-end;
   align-items: center;
   padding: 4px 24px 10px;
-  background: #1a3a5c;
-  border-bottom: 1px solid #0f2540;
+  background: var(--accent);
+  border-bottom: 1px solid var(--accent-dark);
 }
 
 .top-select-row {
@@ -168,7 +197,7 @@ async function logout() {
   font-weight: 600;
   font-family: 'Avenir Next', 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif;
   letter-spacing: 0.2em;
-  color: #0a0a0a;
+  color: #525252;
   text-align: center;
   text-align-last: center;
   appearance: none;
@@ -177,7 +206,7 @@ async function logout() {
   cursor: pointer;
 }
 .challenge-select:focus {
-  outline: 2px solid #1a3a5c;
+  outline: 2px solid var(--accent);
   outline-offset: 1px;
 }
 
@@ -233,9 +262,9 @@ async function logout() {
 .menu-row a:hover { color: #0a0a0a; }
 
 .menu-row a.router-link-active {
-  color: #1a3a5c;
+  color: var(--accent);
   font-weight: 700;
-  border-bottom: 2px solid #1a3a5c;
+  border-bottom: 2px solid var(--accent);
 }
 
 .main-content {

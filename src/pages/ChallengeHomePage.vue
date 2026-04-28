@@ -285,7 +285,7 @@ onMounted(fetchData)
   border-radius: 6px;
   padding: 16px 18px;
 }
-.label { color: #737373; font-size: 0.78rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
+.label { color:  var(--accent); font-size: 0.78rem; font-weight: 500; letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 4px; }
 .value { font-size: 1.6rem; font-weight: 700; color: #0a0a0a; letter-spacing: -0.03em; }
 .card {
   background: #fff;
@@ -293,7 +293,7 @@ onMounted(fetchData)
   border-radius: 6px;
   padding: 18px;
 }
-.card h3 { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #525252; margin-bottom: 14px; }
+.card h3 { font-size: 0.82rem; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent); margin-bottom: 14px; }
 .two-week-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -329,7 +329,6 @@ onMounted(fetchData)
   margin-bottom: auto;
   object-fit: contain;
 }
-.today { color: #737373; margin-bottom: 12px; font-size: 0.88rem; }
 .done-notice {
   background: #f5f5f5;
   border: 1px solid #e5e5e5;
@@ -356,7 +355,7 @@ onMounted(fetchData)
   font-size: 0.9rem;
   color: #0a0a0a;
 }
-.date-picker input:focus { outline: 2px solid #1a3a5c; outline-offset: 1px; }
+.date-picker input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .toggle {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -374,7 +373,7 @@ onMounted(fetchData)
   font-weight: 500;
   transition: all 0.15s;
 }
-.toggle button.active { border-color: #1a3a5c; color: #1a3a5c; background: #f0f4f8; font-weight: 700; }
+.toggle button.active { border-color: #0a0a0a; color: #0a0a0a; background: #f5f5f5; font-weight: 700; }
 .stamp-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
@@ -393,7 +392,7 @@ onMounted(fetchData)
   transition: all 0.15s;
 }
 .stamp-item:hover { border-color: #a3a3a3; }
-.stamp-item.selected { border-color: #1a3a5c; background: #f0f4f8; }
+.stamp-item.selected { border-color: var(--accent); background: #f5f5f5; }
 .stamp-item img { width: 52px; height: 52px; object-fit: contain; }
 .stamp-item span { font-size: 0.73rem; color: #525252; margin-top: 4px; }
 .note-input {
@@ -408,14 +407,14 @@ onMounted(fetchData)
   line-height: 1.5;
   margin-bottom: 10px;
 }
-.note-input:focus { outline: 2px solid #1a3a5c; outline-offset: 1px; }
+.note-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .note-input::placeholder { color: #a3a3a3; }
 .achieve-btn {
   width: 100%;
   padding: 12px;
   border: none;
   border-radius: 4px;
-  background: #1a3a5c;
+  background: var(--accent);
   color: #fff;
   cursor: pointer;
   font-size: 0.95rem;
@@ -423,9 +422,9 @@ onMounted(fetchData)
   letter-spacing: 0.02em;
   transition: background 0.15s;
 }
-.achieve-btn:hover:not(:disabled) { background: #0f2540; }
+.achieve-btn:hover:not(:disabled) { background: var(--accent-dark); }
 .achieve-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-.message { margin-top: 10px; text-align: center; color: #1a3a5c; font-size: 0.9rem; font-weight: 500; }
+.message { margin-top: 10px; text-align: center; color: var(--accent); font-size: 0.9rem; font-weight: 500; }
 @media (max-width: 640px) {
   .stats-grid { grid-template-columns: 1fr; }
   .two-week-grid { gap: 1px; }

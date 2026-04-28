@@ -2,13 +2,26 @@
 import { ref, onMounted } from 'vue'
 import { supabase } from '../lib/supabase.js'
 
+const DEFAULT_ACCENT = '#1a3a5c'
+
 const challenges = ref([])
 const newTitle = ref('')
+const newAccentColor = ref(DEFAULT_ACCENT)
 const challengeLoading = ref(false)
 const editingChallengeId = ref(null)
 const editingTitle = ref('')
+const editingAccentColor = ref(DEFAULT_ACCENT)
 const renamingChallengeId = ref(null)
 const challengeMessage = ref('')
+
+const accentPalette = [
+  "#8ecae6",
+  "#219ebc",
+  DEFAULT_ACCENT,
+  '#2a9d8f',
+  '#ffb703',
+  '#fb8500',
+]
 
 const stamps = ref([])
 const uploading = ref(false)
@@ -36,9 +49,11 @@ async function addChallenge() {
   await supabase.from('challenges').insert({
     user_id: user.id,
     title: newTitle.value.trim(),
+    accent_color: newAccentColor.value,
   })
 
   newTitle.value = ''
+  newAccentColor.value = DEFAULT_ACCENT
   await fetchChallenges()
   challengeLoading.value = false
 }
@@ -51,23 +66,26 @@ async function toggleActive(c) {
 function startEditingChallenge(challenge) {
   editingChallengeId.value = challenge.id
   editingTitle.value = challenge.title
+  editingAccentColor.value = challenge.accent_color
   challengeMessage.value = ''
 }
 
 function cancelEditingChallenge() {
   editingChallengeId.value = null
   editingTitle.value = ''
+  editingAccentColor.value = DEFAULT_ACCENT
 }
 
-async function renameChallenge(challenge) {
+async function saveChallenge(challenge) {
   const trimmedTitle = editingTitle.value.trim()
+  const accentColor = editingAccentColor.value
 
   if (!trimmedTitle) {
     challengeMessage.value = '챌린지 이름을 입력해주세요.'
     return
   }
 
-  if (trimmedTitle === challenge.title) {
+  if (trimmedTitle === challenge.title && accentColor === challenge.accent_color) {
     cancelEditingChallenge()
     return
   }
@@ -77,7 +95,10 @@ async function renameChallenge(challenge) {
 
   const { error } = await supabase
     .from('challenges')
-    .update({ title: trimmedTitle })
+    .update({
+      title: trimmedTitle,
+      accent_color: accentColor,
+    })
     .eq('id', challenge.id)
 
   if (error) {
@@ -304,6 +325,22 @@ onMounted(async () => {
         <button type="submit" :disabled="challengeLoading">추가</button>
       </form>
 
+      <div class="palette-row">
+        <span class="palette-label">테마</span>
+        <div class="palette-list">
+          <button
+            v-for="color in accentPalette"
+            :key="`new-${color}`"
+            type="button"
+            class="palette-chip"
+            :class="{ selected: newAccentColor === color }"
+            :style="{ background: color }"
+            @click="newAccentColor = color"
+            :aria-label="`테마 ${color}`"
+          />
+        </div>
+      </div>
+
       <p v-if="challengeMessage" class="msg challenge-msg">{{ challengeMessage }}</p>
 
       <div v-if="challenges.length === 0" class="empty">아직 챌린지가 없습니다.</div>
@@ -314,11 +351,27 @@ onMounted(async () => {
               v-model="editingTitle"
               class="edit-input"
               :disabled="renamingChallengeId === c.id"
-              @keyup.enter="renameChallenge(c)"
+              @keyup.enter="saveChallenge(c)"
               @keyup.esc="cancelEditingChallenge"
             />
+            <div class="palette-list palette-list-inline">
+              <button
+                v-for="color in accentPalette"
+                :key="`${c.id}-${color}`"
+                type="button"
+                class="palette-chip small"
+                :class="{ selected: editingAccentColor === color }"
+                :style="{ background: color }"
+                @click="editingAccentColor = color"
+                :disabled="renamingChallengeId === c.id"
+                :aria-label="`테마 ${color}`"
+              />
+            </div>
           </template>
-          <span v-else class="card-title">{{ c.title }}</span>
+          <template v-else>
+            <span class="accent-dot" :style="{ background: c.accent_color }" />
+            <span class="card-title">{{ c.title }}</span>
+          </template>
           <span class="card-badge" :class="c.is_active ? 'active' : 'archived'">
             {{ c.is_active ? '진행중' : '보관' }}
           </span>
@@ -326,7 +379,7 @@ onMounted(async () => {
         <div class="card-actions">
           <template v-if="editingChallengeId === c.id">
             <button
-              @click="renameChallenge(c)"
+              @click="saveChallenge(c)"
               class="btn-sm btn-primary"
               :disabled="renamingChallengeId === c.id"
             >
@@ -346,7 +399,7 @@ onMounted(async () => {
             class="btn-sm"
             :disabled="renamingChallengeId === c.id"
           >
-            이름 수정
+            수정
           </button>
           <button @click="toggleActive(c)" class="btn-sm">{{ c.is_active ? '보관' : '복원' }}</button>
           <button @click="deleteChallenge(c)" class="btn-sm btn-delete">삭제</button>
@@ -442,10 +495,10 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   font-size: 0.9rem;
   color: #0a0a0a;
 }
-.add-form input:focus { outline: 2px solid #1a3a5c; outline-offset: 1px; }
+.add-form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .add-form button {
   padding: 8px 18px;
-  background: #1a3a5c;
+  background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -454,7 +507,42 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   font-weight: 600;
   transition: background 0.15s;
 }
-.add-form button:hover { background: #0f2540; }
+.add-form button:hover { background: var(--accent-dark); }
+.palette-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+.palette-label {
+  font-size: 0.84rem;
+  color: #525252;
+  font-weight: 600;
+  white-space: nowrap;
+}
+.palette-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+.palette-list-inline {
+  margin-top: 8px;
+}
+.palette-chip {
+  width: 22px;
+  height: 22px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  box-shadow: 0 0 0 1px #d4d4d4;
+  cursor: pointer;
+}
+.palette-chip.small {
+  width: 20px;
+  height: 20px;
+}
+.palette-chip.selected {
+  box-shadow: 0 0 0 2px #0a0a0a;
+}
 .empty { color: #a3a3a3; text-align: center; padding: 24px 0; font-size: 0.88rem; }
 .challenge-card {
   background: #fff;
@@ -466,10 +554,16 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
 }
 .challenge-card:hover { background: #fafafa; }
 .challenge-card.inactive { opacity: 0.5; }
-.card-info { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; }
+.card-info { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.accent-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  flex-shrink: 0;
+}
 .card-title { font-weight: 600; font-size: 0.92rem; color: #0a0a0a; }
 .edit-input {
-  flex: 1;
+  flex: 1 1 220px;
   min-width: 0;
   padding: 7px 10px;
   border: 1px solid #d4d4d4;
@@ -478,7 +572,7 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   color: #0a0a0a;
   background: #fff;
 }
-.edit-input:focus { outline: 2px solid #1a3a5c; outline-offset: 1px; }
+.edit-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .card-badge { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.04em; }
 .card-badge.active { background: #0a0a0a; color: #fff; }
 .card-badge.archived { background: #f0f0f0; color: #737373; }
@@ -495,11 +589,11 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
 }
 .btn-sm:hover { background: #f5f5f5; color: #0a0a0a; }
 .btn-primary {
-  background: #1a3a5c;
-  border-color: #1a3a5c;
+  background: var(--accent);
+  border-color: var(--accent);
   color: #fff;
 }
-.btn-primary:hover { background: #0f2540; color: #fff; }
+.btn-primary:hover { background: var(--accent-dark); color: #fff; }
 .btn-delete {
   font-size: 0.78rem;
   padding: 4px 10px;
@@ -547,7 +641,7 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   font-size: 0.9rem;
   color: #0a0a0a;
 }
-.upload-form input:first-child:focus { outline: 2px solid #1a3a5c; outline-offset: 1px; }
+.upload-form input:first-child:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .upload-form input[type="file"] {
   height: 38px;
   border: 1px solid #d4d4d4;
@@ -570,7 +664,7 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
 }
 .upload-form button {
   padding: 8px 18px;
-  background: #1a3a5c;
+  background: var(--accent);
   color: #fff;
   border: none;
   border-radius: 4px;
@@ -579,9 +673,9 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   font-weight: 600;
   transition: background 0.15s;
 }
-.upload-form button:hover:not(:disabled) { background: #0f2540; }
+.upload-form button:hover:not(:disabled) { background: var(--accent-dark); }
 .upload-form button:disabled { opacity: 0.5; cursor: not-allowed; }
-.msg { font-size: 0.88rem; color: #1a3a5c; margin-bottom: 10px; font-weight: 500; }
+.msg { font-size: 0.88rem; color: var(--accent); margin-bottom: 10px; font-weight: 500; }
 .challenge-msg { margin-top: -2px; }
 .stamp-list {
   display: grid;
