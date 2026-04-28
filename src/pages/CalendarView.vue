@@ -167,8 +167,8 @@ h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
 }
 .cal-cell {
   min-width: 0;
-  min-height: clamp(70px, 12vw, 150px);
-  aspect-ratio: 1 / 1.2;
+  min-height: clamp(85px, 14vw, 160px);
+  aspect-ratio: 1 / 1.15;
   border: 1px solid #f0f0f0;
   border-radius: 4px;
   padding: clamp(2px, 0.4vw, 4px) 0;
@@ -200,15 +200,15 @@ h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   padding-bottom: clamp(2px, 0.45vw, 6px);
 }
 .cal-stamp {
-  width: min(100%, clamp(36px, 11vw, 96px));
+  width: min(100%, clamp(45px, 12vw, 110px));
   height: auto;
-  max-height: clamp(36px, 11vw, 96px);
+  max-height: clamp(45px, 12vw, 110px);
   object-fit: contain;
 }
 .btn-del-small {
   position: absolute;
-  top: -2px;
-  right: -8px;
+  top: 2px;
+  right: 2px;
   width: 16px;
   height: 16px;
   font-size: 9px;
@@ -221,6 +221,7 @@ h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   color: #fff;
   cursor: pointer;
   display: none;
+  z-index: 10;
 }
 .cal-cell:hover .btn-del-small {
   display: block;
@@ -251,8 +252,8 @@ h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   }
 
   .cal-cell {
-    aspect-ratio: auto;
-    min-height: 56px;
+    aspect-ratio: 1 / 1.3;
+    min-height: 68px;
     padding-top: 3px;
   }
 
@@ -262,8 +263,8 @@ h2 { font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   }
 
   .btn-del-small {
-    top: 0;
-    right: 0;
+    top: 1px;
+    right: 1px;
   }
 }
 </style>
