@@ -21,6 +21,11 @@ const saving = ref(false)
 const message = ref('')
 
 const today = computed(() => dayjs().format('YYYY-MM-DD'))
+const noticeMessage = computed(() => {
+  if (todayRecord.value && selectedDate.value === today.value) return '오늘은 이미 달성했습니다.'
+  if (selectedDateRecord.value) return '선택한 날짜는 이미 달성했습니다. 다시 찍으면 덮어씁니다.'
+  return ''
+})
 const selectedDateRecord = computed(() => {
   return allRecords.value.find(r => r.achieved_on === selectedDate.value) || null
 })
@@ -208,28 +213,23 @@ onMounted(fetchData)
       </section>
 
       <section class="card">
-        <h3>Accomplish</h3>
-
-        <div v-if="todayRecord && selectedDate === today" class="done-notice">
-          오늘은 챌린지를 달성했습니다.
-        </div>
-        <div v-else-if="selectedDateRecord" class="done-notice">
-          선택한 날짜는 이미 달성했습니다. 다시 찍으면 덮어씁니다.
+        <div class="accomplish-header">
+          <h3>Accomplish</h3>
+          <span class="done-notice" :class="{ visible: noticeMessage }">{{ noticeMessage }}</span>
         </div>
 
-        <div class="date-picker">
-          <label for="achieve-date">날짜 선택:</label>
+        <div class="accomplish-row">
           <input
             id="achieve-date"
             v-model="selectedDate"
             type="date"
             :max="today"
+            class="date-input"
           />
-        </div>
-
-        <div class="toggle">
-          <button :class="{ active: selectionMode === 'random' }" @click="selectionMode = 'random'">랜덤 도장</button>
-          <button :class="{ active: selectionMode === 'manual' }" @click="selectionMode = 'manual'">직접 선택</button>
+          <div class="toggle">
+            <button :class="{ active: selectionMode === 'random' }" @click="selectionMode = 'random'">랜덤</button>
+            <button :class="{ active: selectionMode === 'manual' }" @click="selectionMode = 'manual'">선택</button>
+          </div>
         </div>
 
         <div v-if="selectionMode === 'manual'" class="stamp-grid">
@@ -305,7 +305,7 @@ onMounted(fetchData)
   aspect-ratio: 1 / 1.15;
   border: 1px solid #f0f0f0;
   border-radius: 4px;
-  padding: clamp(2px, 0.35vw, 4px);
+  padding: clamp(2px, 0.3vw, 4px);
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -322,56 +322,68 @@ onMounted(fetchData)
   line-height: 1.05;
 }
 .tiny-stamp {
-  width: min(100%, clamp(32px, 10.4vw, 92px));
+  width: min(100%, clamp(40px, 10.5vw, 120px));
   height: auto;
-  max-height: clamp(32px, 10.4vw, 92px);
+  max-height: clamp(40px, 10.5vw, 120px);
   margin-top: auto;
   margin-bottom: auto;
   object-fit: contain;
 }
-.done-notice {
-  background: #f5f5f5;
-  border: 1px solid #e5e5e5;
-  border-radius: 6px;
-  padding: 12px;
-  text-align: center;
-  color: #0a0a0a;
-  margin-bottom: 12px;
-  font-size: 0.9rem;
-  font-weight: 500;
-}
-.date-picker {
+.accomplish-header {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 10px;
 }
-.date-picker label { color: #525252; font-size: 0.85rem; white-space: nowrap; font-weight: 500; }
-.date-picker input {
+.accomplish-header h3 { margin-bottom: 0; }
+.done-notice {
+  visibility: hidden;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #a3a3a3;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60%;
+  text-align: right;
+}
+.done-notice.visible {
+  visibility: visible;
+  color: var(--accent-dark);
+}
+.accomplish-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.date-input {
   flex: 1;
+  min-width: 0;
   padding: 7px 10px;
   border: 1px solid #d4d4d4;
   border-radius: 4px;
   font-size: 0.9rem;
   color: #0a0a0a;
 }
-.date-picker input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.date-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .toggle {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 8px;
-  margin-bottom: 12px;
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
 }
 .toggle button {
   border: 1px solid #d4d4d4;
   background: #fff;
   border-radius: 4px;
-  padding: 9px;
+  padding: 7px 12px;
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: 0.85rem;
   color: #525252;
   font-weight: 500;
   transition: all 0.15s;
+  white-space: nowrap;
 }
 .toggle button.active { border-color: #0a0a0a; color: #0a0a0a; background: #f5f5f5; font-weight: 700; }
 .stamp-grid {

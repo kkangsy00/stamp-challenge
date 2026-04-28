@@ -196,12 +196,12 @@ watch(() => route.query.c, async (value) => {
   min-width: 0;
   flex: 1;
   justify-content: center;
-  padding-bottom: clamp(2px, 0.45vw, 6px);
+  padding-bottom: clamp(1px, 0.3vw, 4px);
 }
 .cal-stamp {
-  width: min(100%, clamp(45px, 12vw, 110px));
+  width: min(100%, clamp(60px, 13vw, 140px));
   height: auto;
-  max-height: clamp(45px, 12vw, 110px);
+  max-height: clamp(60px, 13vw, 140px);
   object-fit: contain;
 }
 .btn-del-small {

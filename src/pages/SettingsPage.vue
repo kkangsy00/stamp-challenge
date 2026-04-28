@@ -317,17 +317,15 @@ onMounted(async () => {
 
 <template>
   <div class="settings-wrap">
-    <h1>설정</h1>
-
     <section class="card">
-      <form @submit.prevent="addChallenge" class="add-form">
-        <input v-model="newTitle" placeholder="새 챌린지 이름" :disabled="challengeLoading" />
-        <button type="submit" :disabled="challengeLoading">추가</button>
-      </form>
+      <div class="challenge-setup">
+        <form @submit.prevent="addChallenge" class="add-form">
+          <input v-model="newTitle" placeholder="새 챌린지 이름" :disabled="challengeLoading" />
+          <button type="submit" :disabled="challengeLoading">추가</button>
+        </form>
 
-      <div class="palette-row">
-        <span class="palette-label">테마</span>
-        <div class="palette-list">
+        <div class="palette-row">
+          <div class="palette-list">
           <button
             v-for="color in accentPalette"
             :key="`new-${color}`"
@@ -339,6 +337,7 @@ onMounted(async () => {
             :aria-label="`테마 ${color}`"
           />
         </div>
+      </div>
       </div>
 
       <p v-if="challengeMessage" class="msg challenge-msg">{{ challengeMessage }}</p>
@@ -482,10 +481,18 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   border-radius: 6px;
   padding: 20px;
 }
+.challenge-setup {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+  align-items: center;
+  margin-bottom: 14px;
+}
 .add-form {
   display: flex;
   gap: 8px;
-  margin-bottom: 14px;
+  flex: 1;
+  min-width: 240px;
 }
 .add-form input {
   flex: 1;
@@ -512,7 +519,8 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   display: flex;
   align-items: center;
   gap: 10px;
-  margin-bottom: 12px;
+  flex: 1;
+  min-width: 240px;
 }
 .palette-label {
   font-size: 0.84rem;
@@ -693,8 +701,8 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
 .stamp-card:hover { background: #fafafa; }
 .stamp-card.inactive { opacity: 0.65; }
 .stamp-card img {
-  width: 64px;
-  height: 64px;
+  width: 72px;
+  height: 72px;
   object-fit: contain;
 }
 .stamp-name {
