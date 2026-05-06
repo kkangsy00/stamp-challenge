@@ -152,7 +152,7 @@ watch(() => route.query.c, async (value) => {
 .month-label { font-size: 1rem; font-weight: 700; letter-spacing: -0.01em; }
 .cal-grid {
   display: grid;
-  grid-template-columns: repeat(7, 1fr);
+  grid-template-columns: repeat(7, minmax(0, 1fr));
   gap: clamp(1px, 0.35vw, 4px);
 }
 .cal-header {
@@ -251,8 +251,8 @@ watch(() => route.query.c, async (value) => {
   }
 
   .cal-cell {
-    aspect-ratio: 1 / 1.3;
-    min-height: 68px;
+    aspect-ratio: auto;
+    min-height: 72px;
     padding-top: 3px;
   }
 
