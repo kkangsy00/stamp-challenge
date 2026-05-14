@@ -23,7 +23,7 @@ const message = ref('')
 const today = computed(() => dayjs().format('YYYY-MM-DD'))
 const noticeMessage = computed(() => {
   if (todayRecord.value && selectedDate.value === today.value) return '오늘은 이미 달성했습니다.'
-  if (selectedDateRecord.value) return '선택한 날짜는 이미 달성했습니다. 다시 찍으면 덮어씁니다.'
+  if (selectedDateRecord.value) return '선택한 날짜는 이미 달성했습니다.'
   return ''
 })
 const selectedDateRecord = computed(() => {
@@ -114,7 +114,7 @@ async function fetchData() {
 async function achieve() {
   if (!challengeId.value) return
   if (stamps.value.length === 0) {
-    message.value = '먼저 설정 > 도장 관리에서 도장을 업로드해주세요.'
+    message.value = '먼저 설정에서 도장을 업로드해주세요.'
     return
   }
 
@@ -160,7 +160,7 @@ async function achieve() {
   if (error) {
     message.value = `오류: ${error.message}`
   } else {
-    message.value = selectedDateRecord.value ? '기존 기록을 새 도장으로 업데이트했어요!' : '달성 완료!'
+    message.value = selectedDateRecord.value ? '새 도장으로 업데이트했어요!' : '달성 완료!'
     noteInput.value = ''
     await fetchData()
   }
