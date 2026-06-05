@@ -2,25 +2,22 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import dayjs from 'dayjs'
 import { useChallenges } from '../composables/useChallenges.js'
-import { getChallenge } from '../api/challenges.js'
 import { stampPublicUrl } from '../api/stamps.js'
 import { listRecordsByChallenge, removeRecord } from '../api/records.js'
 
-const { selectedChallengeId, ensureSelected } = useChallenges()
+// 챌린지는 공유 상태(currentChallenge)를 그대로 쓴다 — 재조회 불필요.
+const { selectedChallengeId, currentChallenge, ensureSelected } = useChallenges()
 
-const challenge = ref(null)
 const records = ref([])
 const currentMonth = ref(dayjs().startOf('month'))
 
 async function fetchData() {
   const cid = await ensureSelected()
   if (!cid) {
-    challenge.value = null
     records.value = []
     return
   }
 
-  challenge.value = await getChallenge(cid)
   records.value = await listRecordsByChallenge(cid, { ascending: true })
 }
 
@@ -74,7 +71,7 @@ watch(selectedChallengeId, fetchData)
 </script>
 
 <template>
-  <div v-if="challenge">
+  <div v-if="currentChallenge">
 
     <!-- 월 이동 -->
     <div class="month-nav">

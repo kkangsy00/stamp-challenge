@@ -20,15 +20,6 @@ export async function listActiveChallenges() {
   return data || []
 }
 
-export async function getChallenge(id) {
-  const { data } = await supabase
-    .from('challenges')
-    .select(COLUMNS)
-    .eq('id', id)
-    .maybeSingle()
-  return data
-}
-
 export async function createChallenge({ title, accent_color }) {
   const user_id = await getCurrentUserId()
   return supabase.from('challenges').insert({ user_id, title, accent_color })

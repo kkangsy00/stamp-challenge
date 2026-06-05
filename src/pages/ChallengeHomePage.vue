@@ -2,13 +2,12 @@
 import { computed, ref, onMounted, watch } from 'vue'
 import dayjs from 'dayjs'
 import { useChallenges } from '../composables/useChallenges.js'
-import { getChallenge } from '../api/challenges.js'
 import { listActiveStamps, stampPublicUrl } from '../api/stamps.js'
 import { listRecordsByChallenge, achieve as achieveRecord } from '../api/records.js'
 
-const { selectedChallengeId, ensureSelected } = useChallenges()
+// 선택된 챌린지는 App이 로드한 공유 상태(currentChallenge)를 그대로 쓴다 — 재조회 불필요.
+const { selectedChallengeId, currentChallenge, ensureSelected } = useChallenges()
 
-const challenge = ref(null)
 const allRecords = ref([])
 const stamps = ref([])
 const todayRecord = ref(null)
@@ -66,7 +65,6 @@ async function fetchData() {
 
   const cid = await ensureSelected()
   if (!cid) {
-    challenge.value = null
     allRecords.value = []
     stamps.value = []
     todayRecord.value = null
@@ -74,7 +72,6 @@ async function fetchData() {
     return
   }
 
-  challenge.value = await getChallenge(cid)
   stamps.value = await listActiveStamps()
 
   const startOfYear = dayjs().startOf('year').format('YYYY-MM-DD')
@@ -136,7 +133,7 @@ onMounted(fetchData)
   <div class="home-wrap">
     <div v-if="loading" class="empty-box">불러오는 중...</div>
 
-    <template v-else-if="!selectedChallengeId || !challenge">
+    <template v-else-if="!currentChallenge">
       <div class="empty-box">
         활성 챌린지가 없습니다. 설정에서 챌린지를 먼저 만들어주세요.
       </div>

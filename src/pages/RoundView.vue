@@ -2,13 +2,12 @@
 import { ref, computed, onMounted, watch } from 'vue'
 import dayjs from 'dayjs'
 import { useChallenges } from '../composables/useChallenges.js'
-import { getChallenge } from '../api/challenges.js'
 import { stampPublicUrl } from '../api/stamps.js'
 import { countRecords, listRecordsPaged, removeRecord } from '../api/records.js'
 
-const { selectedChallengeId, ensureSelected } = useChallenges()
+// 챌린지는 공유 상태(currentChallenge)를 그대로 쓴다 — 재조회 불필요.
+const { selectedChallengeId, currentChallenge, ensureSelected } = useChallenges()
 
-const challenge = ref(null)
 const records = ref([])
 const currentPage = ref(1)
 const PAGE_SIZE = 20
@@ -53,14 +52,12 @@ async function nextPage() {
 async function fetchData() {
   const cid = await ensureSelected()
   if (!cid) {
-    challenge.value = null
     records.value = []
     totalCount.value = 0
     currentPage.value = 1
     return
   }
 
-  challenge.value = await getChallenge(cid)
   totalCount.value = await countRecords(cid)
   clampCurrentPage()
   await loadPage()
@@ -84,7 +81,7 @@ watch(selectedChallengeId, async () => {
 </script>
 
 <template>
-  <div v-if="challenge">
+  <div v-if="currentChallenge">
     <div v-if="totalCount > 0" class="round-summary">
       <span class="summary-item">총 {{ totalCount }}회</span>
       <span class="summary-sep">·</span>
