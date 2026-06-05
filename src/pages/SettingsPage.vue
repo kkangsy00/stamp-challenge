@@ -1,6 +1,22 @@
 <script setup>
 import { ref, onMounted } from 'vue'
-import { supabase } from '../lib/supabase.js'
+import {
+  listChallenges,
+  createChallenge,
+  updateChallenge,
+  toggleActive as toggleActiveChallenge,
+  removeChallenge,
+} from '../api/challenges.js'
+import {
+  listStamps,
+  stampPublicUrl,
+  uploadStamp as uploadStampApi,
+  replaceStampImage as replaceStampImageApi,
+  softDeleteStamp,
+  restoreStamp as restoreStampApi,
+  hardDeleteStamp,
+} from '../api/stamps.js'
+import { loadChallenges } from '../composables/useChallenges.js'
 
 const DEFAULT_ACCENT = '#1a3a5c'
 
@@ -32,12 +48,15 @@ const fileInput = ref(null)
 const stampFileInputs = ref({})
 const message = ref('')
 
+// 설정 화면은 비활성 챌린지도 보여주므로 전체 목록을 가져온다.
 async function fetchChallenges() {
-  const { data } = await supabase
-    .from('challenges')
-    .select('*')
-    .order('created_at', { ascending: false })
-  challenges.value = data || []
+  challenges.value = await listChallenges()
+}
+
+// 챌린지 변경 후 App 상단의 공유 목록(활성만)도 갱신한다.
+async function refreshChallenges() {
+  await fetchChallenges()
+  await loadChallenges()
 }
 
 async function addChallenge() {
@@ -45,22 +64,17 @@ async function addChallenge() {
   challengeLoading.value = true
   challengeMessage.value = ''
 
-  const { data: { user } } = await supabase.auth.getUser()
-  await supabase.from('challenges').insert({
-    user_id: user.id,
-    title: newTitle.value.trim(),
-    accent_color: newAccentColor.value,
-  })
+  await createChallenge({ title: newTitle.value.trim(), accent_color: newAccentColor.value })
 
   newTitle.value = ''
   newAccentColor.value = DEFAULT_ACCENT
-  await fetchChallenges()
+  await refreshChallenges()
   challengeLoading.value = false
 }
 
 async function toggleActive(c) {
-  await supabase.from('challenges').update({ is_active: !c.is_active }).eq('id', c.id)
-  await fetchChallenges()
+  await toggleActiveChallenge(c)
+  await refreshChallenges()
 }
 
 function startEditingChallenge(challenge) {
@@ -93,20 +107,17 @@ async function saveChallenge(challenge) {
   renamingChallengeId.value = challenge.id
   challengeMessage.value = ''
 
-  const { error } = await supabase
-    .from('challenges')
-    .update({
-      title: trimmedTitle,
-      accent_color: accentColor,
-    })
-    .eq('id', challenge.id)
+  const { error } = await updateChallenge(challenge.id, {
+    title: trimmedTitle,
+    accent_color: accentColor,
+  })
 
   if (error) {
     challengeMessage.value = '이름 수정 실패: ' + error.message
   } else {
     challengeMessage.value = '챌린지 이름을 수정했어요.'
     cancelEditingChallenge()
-    await fetchChallenges()
+    await refreshChallenges()
   }
 
   renamingChallengeId.value = null
@@ -114,23 +125,15 @@ async function saveChallenge(challenge) {
 
 async function deleteChallenge(c) {
   if (!confirm(`"${c.title}" 챌린지를 정말 삭제할까요?`)) return
-  await supabase.from('challenges').delete().eq('id', c.id)
-  await fetchChallenges()
+  await removeChallenge(c.id)
+  await refreshChallenges()
 }
 
 async function fetchStamps() {
-  const { data } = await supabase
-    .from('stamps')
-    .select('*')
-    .order('is_active', { ascending: false })
-    .order('created_at', { ascending: false })
-  stamps.value = data || []
+  stamps.value = await listStamps()
 }
 
-function stampUrl(path) {
-  const { data } = supabase.storage.from('stamps').getPublicUrl(path)
-  return data.publicUrl
-}
+const stampUrl = stampPublicUrl
 
 function setStampFileInputRef(stampId, el) {
   if (el) {
@@ -145,11 +148,6 @@ function openReplaceDialog(stampId) {
   stampFileInputs.value[stampId]?.click()
 }
 
-function buildStampFilePath(userId, file) {
-  const ext = file.name.split('.').pop()
-  return `${userId}/${Date.now()}.${ext}`
-}
-
 async function uploadStamp() {
   const file = fileInput.value?.files?.[0]
   if (!file || !newName.value.trim()) {
@@ -160,25 +158,10 @@ async function uploadStamp() {
   uploading.value = true
   message.value = ''
 
-  const { data: { user } } = await supabase.auth.getUser()
-  const filePath = buildStampFilePath(user.id, file)
+  const { error } = await uploadStampApi({ name: newName.value.trim(), file })
 
-  const { error: upErr } = await supabase.storage.from('stamps').upload(filePath, file)
-  if (upErr) {
-    message.value = '업로드 실패: ' + upErr.message
-    uploading.value = false
-    return
-  }
-
-  const { error: dbErr } = await supabase.from('stamps').insert({
-    user_id: user.id,
-    name: newName.value.trim(),
-    image_path: filePath,
-    is_active: true,
-  })
-
-  if (dbErr) {
-    message.value = 'DB 저장 실패: ' + dbErr.message
+  if (error) {
+    message.value = '업로드 실패: ' + error.message
   } else {
     newName.value = ''
     fileInput.value.value = ''
@@ -191,11 +174,7 @@ async function uploadStamp() {
 async function deleteStamp(s) {
   if (!confirm(`"${s.name}" 도장을 삭제할까요? 기존 기록 이미지는 그대로 유지돼요.`)) return
 
-  const { error } = await supabase
-    .from('stamps')
-    .update({ is_active: false })
-    .eq('id', s.id)
-
+  const { error } = await softDeleteStamp(s.id)
   if (error) {
     message.value = '도장 삭제 실패: ' + error.message
     return
@@ -205,11 +184,7 @@ async function deleteStamp(s) {
 }
 
 async function restoreStamp(s) {
-  const { error } = await supabase
-    .from('stamps')
-    .update({ is_active: true })
-    .eq('id', s.id)
-
+  const { error } = await restoreStampApi(s.id)
   if (error) {
     message.value = '도장 복원 실패: ' + error.message
     return
@@ -230,36 +205,14 @@ async function permanentlyDeleteStamp(s) {
   permanentlyDeletingStampId.value = s.id
   message.value = ''
 
-  const { error: recordError } = await supabase
-    .from('challenge_records')
-    .update({
-      stamp_id: null,
-      stamp_snapshot_path: null,
-    })
-    .eq('stamp_id', s.id)
-
-  if (recordError) {
-    message.value = '기존 기록 정리 실패: ' + recordError.message
-    permanentlyDeletingStampId.value = null
-    return
-  }
-
-  const { error: storageError } = await supabase.storage.from('stamps').remove([s.image_path])
-  if (storageError) {
-    message.value = '스토리지 파일 삭제 실패: ' + storageError.message
-    permanentlyDeletingStampId.value = null
-    return
-  }
-
-  const { error: stampError } = await supabase.from('stamps').delete().eq('id', s.id)
-  if (stampError) {
-    message.value = '도장 영구 삭제 실패: ' + stampError.message
-    permanentlyDeletingStampId.value = null
-    return
+  const { error } = await hardDeleteStamp(s)
+  if (error) {
+    message.value = '도장 영구 삭제 실패: ' + error.message
+  } else {
+    await fetchStamps()
   }
 
   permanentlyDeletingStampId.value = null
-  await fetchStamps()
 }
 
 async function replaceStampImage(s, event) {
@@ -269,44 +222,15 @@ async function replaceStampImage(s, event) {
   replacingStampId.value = s.id
   message.value = ''
 
-  const { data: { user } } = await supabase.auth.getUser()
-  const filePath = buildStampFilePath(user.id, file)
-
-  const { error: uploadError } = await supabase.storage.from('stamps').upload(filePath, file)
-  if (uploadError) {
-    message.value = '이미지 변경 실패: ' + uploadError.message
-    replacingStampId.value = null
-    event.target.value = ''
-    return
-  }
-
-  const { error: stampUpdateError } = await supabase
-    .from('stamps')
-    .update({ image_path: filePath })
-    .eq('id', s.id)
-
-  if (stampUpdateError) {
-    message.value = '도장 정보 업데이트 실패: ' + stampUpdateError.message
-    replacingStampId.value = null
-    event.target.value = ''
-    return
-  }
-
-  const { error: recordsUpdateError } = await supabase
-    .from('challenge_records')
-    .update({ stamp_snapshot_path: filePath })
-    .eq('stamp_id', s.id)
-
-  if (recordsUpdateError) {
-    message.value = '기존 기록 이미지 갱신 실패: ' + recordsUpdateError.message
-    replacingStampId.value = null
-    event.target.value = ''
-    return
+  const { error } = await replaceStampImageApi(s, file)
+  if (error) {
+    message.value = '이미지 변경 실패: ' + error.message
+  } else {
+    await fetchStamps()
   }
 
   replacingStampId.value = null
   event.target.value = ''
-  await fetchStamps()
 }
 
 onMounted(async () => {

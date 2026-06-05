@@ -1,18 +1,18 @@
 <script setup>
-import { computed, ref, onMounted, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { supabase } from './lib/supabase.js'
+import { useAuth } from './composables/useAuth.js'
+import { useChallenges } from './composables/useChallenges.js'
 
 const router = useRouter()
 const route = useRoute()
-const session = ref(null)
-const challenges = ref([])
-const selectedChallengeId = ref('')
+const { ready, isLoggedIn, logout: signOut } = useAuth()
+const { challenges, selectedChallengeId, currentChallenge, loadChallenges, select } = useChallenges()
 
 const DEFAULT_ACCENT = '#1a3a5c'
 const MONO_ACCENT = '#525252'
 const menuRoutes = ['Home', 'Calendar', 'Rounds']
-const showChallengeUI = computed(() => session.value && route.name !== 'Login')
+const showChallengeUI = computed(() => isLoggedIn.value && route.name !== 'Login')
 const showChallengeSelect = computed(() => showChallengeUI.value && route.name !== 'Settings')
 
 function darkenHex(hex, amount = 28) {
@@ -26,14 +26,8 @@ function darkenHex(hex, amount = 28) {
 
 const isChallengeScopedRoute = computed(() => menuRoutes.includes(String(route.name)))
 
-const currentChallenge = computed(() => {
-  if (!selectedChallengeId.value) return null
-  return challenges.value.find(c => c.id === selectedChallengeId.value) || null
-})
-
 const activeAccent = computed(() => {
-  if (!session.value) return MONO_ACCENT
-  if (!isChallengeScopedRoute.value) return MONO_ACCENT
+  if (!isLoggedIn.value || !isChallengeScopedRoute.value) return MONO_ACCENT
   return currentChallenge.value?.accent_color || DEFAULT_ACCENT
 })
 
@@ -41,22 +35,6 @@ const themeStyle = computed(() => ({
   '--accent': activeAccent.value,
   '--accent-dark': darkenHex(activeAccent.value),
 }))
-
-async function fetchChallenges() {
-  const { data } = await supabase
-    .from('challenges')
-    .select('id, title, is_active, accent_color')
-    .order('created_at', { ascending: false })
-
-  challenges.value = (data || []).filter(c => c.is_active)
-
-  if (!selectedChallengeId.value && route.query.c) {
-    selectedChallengeId.value = String(route.query.c)
-  }
-  if (!selectedChallengeId.value && challenges.value.length > 0) {
-    selectedChallengeId.value = challenges.value[0].id
-  }
-}
 
 function withChallengeQuery(routeName) {
   return { name: routeName, query: selectedChallengeId.value ? { c: selectedChallengeId.value } : {} }
@@ -75,32 +53,25 @@ async function applyChallengeToCurrentRoute() {
   })
 }
 
-onMounted(() => {
-  supabase.auth.getSession().then(({ data }) => {
-    session.value = data.session
-    if (data.session) fetchChallenges()
-  })
-
-  supabase.auth.onAuthStateChange((_event, s) => {
-    session.value = s
-    if (!s) {
-      router.push('/login')
-      return
-    }
-    fetchChallenges()
-  })
-})
+// 세션이 확정된 뒤 로그인 상태에 따라 챌린지 로드 / 로그인 화면 이동.
+watch([ready, isLoggedIn], ([isReady, loggedIn]) => {
+  if (!isReady) return
+  if (loggedIn) {
+    if (route.query.c) select(route.query.c)
+    loadChallenges()
+  } else if (route.name !== 'Login') {
+    router.push('/login')
+  }
+}, { immediate: true })
 
 watch(() => route.query.c, (value) => {
-  if (value) selectedChallengeId.value = String(value)
+  if (value) select(value)
 })
 
-watch(selectedChallengeId, async () => {
-  await applyChallengeToCurrentRoute()
-})
+watch(selectedChallengeId, applyChallengeToCurrentRoute)
 
 async function logout() {
-  await supabase.auth.signOut()
+  await signOut()
   router.push('/login')
 }
 </script>

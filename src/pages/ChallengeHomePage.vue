@@ -1,13 +1,13 @@
 <script setup>
 import { computed, ref, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { supabase } from '../lib/supabase.js'
 import dayjs from 'dayjs'
+import { useChallenges } from '../composables/useChallenges.js'
+import { getChallenge } from '../api/challenges.js'
+import { listActiveStamps, stampPublicUrl } from '../api/stamps.js'
+import { listRecordsByChallenge, achieve as achieveRecord } from '../api/records.js'
 
-const route = useRoute()
-const router = useRouter()
+const { selectedChallengeId, ensureSelected } = useChallenges()
 
-const challengeId = ref(String(route.query.c || ''))
 const challenge = ref(null)
 const allRecords = ref([])
 const stamps = ref([])
@@ -48,33 +48,24 @@ const twoWeekRecordMap = computed(() => {
   return map
 })
 
-function stampImageUrl(path) {
-  const { data } = supabase.storage.from('stamps').getPublicUrl(path)
-  return data.publicUrl
-}
-
-async function ensureChallengeId() {
-  if (challengeId.value) return
-
-  const { data } = await supabase
-    .from('challenges')
-    .select('id')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false })
-    .limit(1)
-
-  if (data && data[0]?.id) {
-    challengeId.value = data[0].id
-    await router.replace({ name: 'Home', query: { c: challengeId.value } })
+// 날짜 → 도장 public URL. 템플릿에서 바로 참조할 수 있게 미리 만든다.
+const twoWeekUrlMap = computed(() => {
+  const map = {}
+  for (const d of twoWeekDays.value) {
+    const path = twoWeekRecordMap.value[d]?.stamp_snapshot_path
+    if (path) map[d] = stampPublicUrl(path)
   }
-}
+  return map
+})
+
+const stampImageUrl = stampPublicUrl
 
 async function fetchData() {
   loading.value = true
   message.value = ''
 
-  await ensureChallengeId()
-  if (!challengeId.value) {
+  const cid = await ensureSelected()
+  if (!cid) {
     challenge.value = null
     allRecords.value = []
     stamps.value = []
@@ -83,36 +74,19 @@ async function fetchData() {
     return
   }
 
-  const { data: c } = await supabase
-    .from('challenges')
-    .select('*')
-    .eq('id', challengeId.value)
-    .maybeSingle()
-  challenge.value = c
-
-  const { data: s } = await supabase
-    .from('stamps')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at')
-  stamps.value = s || []
+  challenge.value = await getChallenge(cid)
+  stamps.value = await listActiveStamps()
 
   const startOfYear = dayjs().startOf('year').format('YYYY-MM-DD')
-  const { data: records } = await supabase
-    .from('challenge_records')
-    .select('*')
-    .eq('challenge_id', challengeId.value)
-    .gte('achieved_on', startOfYear)
-    .order('achieved_on', { ascending: false })
-  allRecords.value = records || []
-
+  allRecords.value = await listRecordsByChallenge(cid, { fromDate: startOfYear })
   todayRecord.value = allRecords.value.find(r => r.achieved_on === today.value) || null
 
   loading.value = false
 }
 
 async function achieve() {
-  if (!challengeId.value) return
+  const cid = selectedChallengeId.value
+  if (!cid) return
   if (stamps.value.length === 0) {
     message.value = '먼저 설정에서 도장을 업로드해주세요.'
     return
@@ -131,36 +105,21 @@ async function achieve() {
   }
 
   const stamp = stamps.value.find(s => s.id === stampId)
-  const { data: { user } } = await supabase.auth.getUser()
+  const wasUpdate = !!selectedDateRecord.value
 
-  // 선택한 날짜에 기록이 있으면 먼저 삭제(덮어쓰기)
-  if (selectedDateRecord.value) {
-    const { error: deleteError } = await supabase
-      .from('challenge_records')
-      .delete()
-      .eq('id', selectedDateRecord.value.id)
-
-    if (deleteError) {
-      message.value = `오류: ${deleteError.message}`
-      saving.value = false
-      return
-    }
-  }
-
-  const { error } = await supabase.from('challenge_records').insert({
-    user_id: user.id,
-    challenge_id: challengeId.value,
+  // (challenge_id, achieved_on) UNIQUE 기반 upsert — 같은 날짜면 덮어쓴다.
+  const { error } = await achieveRecord({
+    challengeId: cid,
     achieved_on: selectedDate.value,
-    stamp_id: stampId,
-    stamp_snapshot_path: stamp?.image_path || null,
-    selection_mode: mode,
-    note: noteInput.value.trim() || null,
+    stamp,
+    mode,
+    note: noteInput.value,
   })
 
   if (error) {
     message.value = `오류: ${error.message}`
   } else {
-    message.value = selectedDateRecord.value ? '새 도장으로 업데이트했어요!' : '달성 완료!'
+    message.value = wasUpdate ? '새 도장으로 업데이트했어요!' : '달성 완료!'
     noteInput.value = ''
     await fetchData()
   }
@@ -168,10 +127,7 @@ async function achieve() {
   saving.value = false
 }
 
-watch(() => route.query.c, async (value) => {
-  challengeId.value = String(value || '')
-  await fetchData()
-})
+watch(selectedChallengeId, fetchData)
 
 onMounted(fetchData)
 </script>
@@ -180,7 +136,7 @@ onMounted(fetchData)
   <div class="home-wrap">
     <div v-if="loading" class="empty-box">불러오는 중...</div>
 
-    <template v-else-if="!challengeId || !challenge">
+    <template v-else-if="!selectedChallengeId || !challenge">
       <div class="empty-box">
         활성 챌린지가 없습니다. 설정에서 챌린지를 먼저 만들어주세요.
       </div>
@@ -204,8 +160,8 @@ onMounted(fetchData)
           <div v-for="d in twoWeekDays" :key="d" class="day-cell">
             <div class="day-date">{{ dayjs(d).format('M/D ddd') }}</div>
             <img
-              v-if="twoWeekRecordMap[d]?.stamp_snapshot_path"
-              :src="stampImageUrl(twoWeekRecordMap[d].stamp_snapshot_path)"
+              v-if="twoWeekUrlMap[d]"
+              :src="twoWeekUrlMap[d]"
               class="tiny-stamp"
             />
           </div>

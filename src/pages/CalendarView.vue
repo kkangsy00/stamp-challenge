@@ -1,62 +1,42 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { supabase } from '../lib/supabase.js'
 import dayjs from 'dayjs'
+import { useChallenges } from '../composables/useChallenges.js'
+import { getChallenge } from '../api/challenges.js'
+import { stampPublicUrl } from '../api/stamps.js'
+import { listRecordsByChallenge, removeRecord } from '../api/records.js'
 
-const route = useRoute()
-const router = useRouter()
-const challengeId = ref(String(route.query.c || ''))
+const { selectedChallengeId, ensureSelected } = useChallenges()
 
 const challenge = ref(null)
 const records = ref([])
 const currentMonth = ref(dayjs().startOf('month'))
 
-function stampUrl(path) {
-  const { data } = supabase.storage.from('stamps').getPublicUrl(path)
-  return data.publicUrl
-}
-
 async function fetchData() {
-  if (!challengeId.value) {
-    const { data } = await supabase
-      .from('challenges')
-      .select('id')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
-
-    if (data && data[0]?.id) {
-      challengeId.value = data[0].id
-      await router.replace({ name: 'Calendar', query: { c: challengeId.value } })
-    }
-  }
-
-  if (!challengeId.value) {
+  const cid = await ensureSelected()
+  if (!cid) {
     challenge.value = null
     records.value = []
     return
   }
 
-  const { data: c } = await supabase
-    .from('challenges')
-    .select('*')
-    .eq('id', challengeId.value)
-    .single()
-  challenge.value = c
-
-  const { data: r } = await supabase
-    .from('challenge_records')
-    .select('*, stamps(name, image_path)')
-    .eq('challenge_id', challengeId.value)
-    .order('achieved_on')
-  records.value = r || []
+  challenge.value = await getChallenge(cid)
+  records.value = await listRecordsByChallenge(cid, { ascending: true })
 }
 
 // 날짜별 기록 맵
 const recordMap = computed(() => {
   const map = {}
   records.value.forEach(r => { map[r.achieved_on] = r })
+  return map
+})
+
+// 날짜 → 도장 public URL. 템플릿에서 바로 참조할 수 있게 미리 만든다.
+const urlMap = computed(() => {
+  const map = {}
+  for (const r of records.value) {
+    if (r.stamp_snapshot_path) map[r.achieved_on] = stampPublicUrl(r.stamp_snapshot_path)
+  }
   return map
 })
 
@@ -84,16 +64,13 @@ function nextMonth() { currentMonth.value = currentMonth.value.add(1, 'month') }
 
 async function deleteRecord(id) {
   if (!confirm('이 날의 도장 기록을 삭제할까요?')) return
-  await supabase.from('challenge_records').delete().eq('id', id)
+  await removeRecord(id)
   await fetchData()
 }
 
 onMounted(fetchData)
 
-watch(() => route.query.c, async (value) => {
-  challengeId.value = String(value || '')
-  await fetchData()
-})
+watch(selectedChallengeId, fetchData)
 </script>
 
 <template>
@@ -116,8 +93,8 @@ watch(() => route.query.c, async (value) => {
           <span class="cal-date">{{ dayjs(day).date() }}</span>
           <div v-if="recordMap[day]" class="cal-stamp-wrap">
             <img
-              v-if="recordMap[day].stamp_snapshot_path"
-              :src="stampUrl(recordMap[day].stamp_snapshot_path)"
+              v-if="urlMap[day]"
+              :src="urlMap[day]"
               class="cal-stamp"
             />
             <button class="btn-del-small" @click="deleteRecord(recordMap[day].id)">✕</button>
@@ -126,7 +103,7 @@ watch(() => route.query.c, async (value) => {
       </div>
     </div>
 
-    <router-link :to="{ name: 'Home', query: challengeId ? { c: challengeId } : {} }" class="back-link">← 돌아가기</router-link>
+    <router-link :to="{ name: 'Home', query: selectedChallengeId ? { c: selectedChallengeId } : {} }" class="back-link">← 돌아가기</router-link>
   </div>
 </template>
 

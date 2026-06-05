@@ -1,5 +1,5 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import { supabase } from '../lib/supabase.js'
+import { ensureSession } from '../composables/useAuth.js'
 
 import LoginPage from '../pages/LoginPage.vue'
 import HomePage from '../pages/ChallengeHomePage.vue'
@@ -27,13 +27,12 @@ const router = createRouter({
   routes,
 })
 
-// 인증 가드: 로그인 안 되어 있으면 /login 으로
+// 인증 가드: 로그인 안 되어 있으면 /login 으로.
+// 세션은 최초 1회만 네트워크/스토리지에서 읽고 이후엔 캐시를 본다.
 router.beforeEach(async (to) => {
-  const { data: { session } } = await supabase.auth.getSession()
-  const isLoggedIn = !!session
-
   if (to.meta.requiresAuth === false) return true
-  if (!isLoggedIn) return { name: 'Login' }
+  const session = await ensureSession()
+  if (!session) return { name: 'Login' }
   return true
 })
 

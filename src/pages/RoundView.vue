@@ -1,12 +1,12 @@
 <script setup>
 import { ref, computed, onMounted, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
-import { supabase } from '../lib/supabase.js'
 import dayjs from 'dayjs'
+import { useChallenges } from '../composables/useChallenges.js'
+import { getChallenge } from '../api/challenges.js'
+import { stampPublicUrl } from '../api/stamps.js'
+import { countRecords, listRecordsPaged, removeRecord } from '../api/records.js'
 
-const route = useRoute()
-const router = useRouter()
-const challengeId = ref(String(route.query.c || ''))
+const { selectedChallengeId, ensureSelected } = useChallenges()
 
 const challenge = ref(null)
 const records = ref([])
@@ -18,44 +18,41 @@ const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / PAGE_
 const startIndex = computed(() => (currentPage.value - 1) * PAGE_SIZE)
 const endIndex = computed(() => Math.min(startIndex.value + records.value.length, totalCount.value))
 
+// record id → 도장 public URL. 템플릿에서 바로 참조할 수 있게 미리 만든다.
+const urlMap = computed(() => {
+  const map = {}
+  for (const r of records.value) {
+    if (r.stamp_snapshot_path) map[r.id] = stampPublicUrl(r.stamp_snapshot_path)
+  }
+  return map
+})
+
 function clampCurrentPage() {
   if (currentPage.value < 1) currentPage.value = 1
   if (currentPage.value > totalPages.value) currentPage.value = totalPages.value
 }
 
+async function loadPage() {
+  const cid = selectedChallengeId.value
+  if (!cid) return
+  records.value = await listRecordsPaged(cid, startIndex.value, startIndex.value + PAGE_SIZE - 1)
+}
+
 async function prevPage() {
   if (currentPage.value <= 1) return
   currentPage.value -= 1
-  await fetchRecordsPage()
+  await loadPage()
 }
 
 async function nextPage() {
   if (currentPage.value >= totalPages.value) return
   currentPage.value += 1
-  await fetchRecordsPage()
-}
-
-function stampUrl(path) {
-  const { data } = supabase.storage.from('stamps').getPublicUrl(path)
-  return data.publicUrl
+  await loadPage()
 }
 
 async function fetchData() {
-  if (!challengeId.value) {
-    const { data } = await supabase
-      .from('challenges')
-      .select('id')
-      .eq('is_active', true)
-      .order('created_at', { ascending: false })
-      .limit(1)
-
-    if (data && data[0]?.id) {
-      challengeId.value = data[0].id
-      await router.replace({ name: 'Rounds', query: { c: challengeId.value } })
-    }
-  }
-
-  if (!challengeId.value) {
+  const cid = await ensureSelected()
+  if (!cid) {
     challenge.value = null
     records.value = []
     totalCount.value = 0
@@ -63,66 +60,24 @@ async function fetchData() {
     return
   }
 
-  const { data: c } = await supabase
-    .from('challenges')
-    .select('id')
-    .eq('id', challengeId.value)
-    .single()
-  challenge.value = c
-
-  const { count } = await supabase
-    .from('challenge_records')
-    .select('id', { count: 'exact', head: true })
-    .eq('challenge_id', challengeId.value)
-
-  totalCount.value = count || 0
+  challenge.value = await getChallenge(cid)
+  totalCount.value = await countRecords(cid)
   clampCurrentPage()
-
-  const from = startIndex.value
-  const to = from + PAGE_SIZE - 1
-
-  const { data: r } = await supabase
-    .from('challenge_records')
-    .select('*')
-    .eq('challenge_id', challengeId.value)
-    .range(from, to)
-    .order('achieved_on', { ascending: true })
-  records.value = r || []
-}
-
-async function fetchRecordsPage() {
-  if (!challengeId.value) return
-  const from = startIndex.value
-  const to = from + PAGE_SIZE - 1
-
-  const { data: r } = await supabase
-    .from('challenge_records')
-    .select('*')
-    .eq('challenge_id', challengeId.value)
-    .range(from, to)
-    .order('achieved_on', { ascending: true })
-
-  records.value = r || []
+  await loadPage()
 }
 
 async function deleteRecord(id) {
   if (!confirm('이 회차의 도장 기록을 삭제할까요?')) return
-  await supabase.from('challenge_records').delete().eq('id', id)
+  await removeRecord(id)
 
-  const { count } = await supabase
-    .from('challenge_records')
-    .select('id', { count: 'exact', head: true })
-    .eq('challenge_id', challengeId.value)
-
-  totalCount.value = count || 0
+  totalCount.value = await countRecords(selectedChallengeId.value)
   clampCurrentPage()
-  await fetchRecordsPage()
+  await loadPage()
 }
 
 onMounted(fetchData)
 
-watch(() => route.query.c, async (value) => {
-  challengeId.value = String(value || '')
+watch(selectedChallengeId, async () => {
   currentPage.value = 1
   await fetchData()
 })
@@ -148,8 +103,8 @@ watch(() => route.query.c, async (value) => {
       <div v-for="(r, idx) in records" :key="r.id" class="round-card">
         <div class="round-no">{{ startIndex + idx + 1 }}회차</div>
         <img
-          v-if="r.stamp_snapshot_path"
-          :src="stampUrl(r.stamp_snapshot_path)"
+          v-if="urlMap[r.id]"
+          :src="urlMap[r.id]"
           class="round-stamp"
         />
         <div class="round-info">
@@ -160,7 +115,7 @@ watch(() => route.query.c, async (value) => {
       </div>
     </div>
 
-    <router-link :to="{ name: 'Home', query: challengeId ? { c: challengeId } : {} }" class="back-link">← 돌아가기</router-link>
+    <router-link :to="{ name: 'Home', query: selectedChallengeId ? { c: selectedChallengeId } : {} }" class="back-link">← 돌아가기</router-link>
   </div>
 </template>
 
