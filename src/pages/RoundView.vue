@@ -59,7 +59,7 @@ async function fetchData() {
   }
 
   totalCount.value = await countRecords(cid)
-  clampCurrentPage()
+  currentPage.value = totalPages.value
   await loadPage()
 }
 
