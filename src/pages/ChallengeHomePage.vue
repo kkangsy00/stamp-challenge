@@ -175,17 +175,13 @@ onMounted(fetchData)
           <div class="today-label">{{ dayjs().format('M월 D일 (ddd)') }}</div>
           <div class="today-headline">{{ todayHeadline }}</div>
           <div v-if="todayRecord?.note" class="today-note">{{ todayRecord.note }}</div>
+          <div class="today-meta">
+            이번 달 <b>{{ monthCount }}</b> · 올해 <b>{{ yearCount }}</b>
+          </div>
         </div>
       </section>
 
-      <div class="stat-strip">
-        <span class="strip-item">이번 달 <b>{{ monthCount }}</b></span>
-        <span class="strip-sep">·</span>
-        <span class="strip-item">올해 <b>{{ yearCount }}</b></span>
-      </div>
-
       <section class="card">
-        <h3>Current Record</h3>
         <div class="two-week-grid">
           <div v-for="d in twoWeekDays" :key="d" class="day-cell">
             <div class="day-date">{{ dayjs(d).format('M/D ddd') }}</div>
@@ -199,10 +195,7 @@ onMounted(fetchData)
       </section>
 
       <section class="card">
-        <div class="accomplish-header">
-          <h3>Accomplish</h3>
-          <span class="done-notice" :class="{ visible: noticeMessage }">{{ noticeMessage }}</span>
-        </div>
+        <h3 class="section-title">Accomplish</h3>
 
         <div class="accomplish-row">
           <input
@@ -217,6 +210,8 @@ onMounted(fetchData)
             <button :class="{ active: selectionMode === 'manual' }" @click="selectionMode = 'manual'">선택</button>
           </div>
         </div>
+
+        <p class="done-notice" :class="{ visible: noticeMessage }">{{ noticeMessage }}</p>
 
         <div v-if="selectionMode === 'manual'" class="stamp-grid">
           <button
@@ -250,7 +245,7 @@ onMounted(fetchData)
 </template>
 
 <style scoped>
-.home-wrap { display: grid; gap: var(--space-5); }
+.home-wrap { display: grid; gap: var(--space-8); }
 .empty-box {
   background: var(--surface-2);
   border: 1px solid var(--line-2);
@@ -264,12 +259,10 @@ onMounted(fetchData)
   display: flex;
   align-items: center;
   gap: var(--space-5);
-  background: var(--surface);
-  border: 1px solid var(--line-2);
+  background: var(--surface-2);
   border-radius: var(--radius-md);
   padding: var(--space-5);
 }
-.today-card.done { border-color: var(--accent); }
 .today-visual {
   width: 84px;
   height: 84px;
@@ -282,7 +275,7 @@ onMounted(fetchData)
 .today-placeholder {
   width: 100%;
   height: 100%;
-  border: 2px dashed var(--line-2);
+  border: 2px dashed var(--line);
   border-radius: var(--radius-full);
   display: flex;
   align-items: center;
@@ -312,29 +305,19 @@ onMounted(fetchData)
   color: var(--ink-3);
   overflow-wrap: anywhere;
 }
-.stat-strip {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-top: -8px;
-  font-size: var(--text-sm);
-  color: var(--ink-3);
+.today-meta {
+  margin-top: var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--ink-4);
 }
-.stat-strip b {
-  font-weight: 700;
-  color: var(--ink);
+.today-meta b {
+  font-weight: 600;
+  color: var(--ink-3);
   font-variant-numeric: tabular-nums;
 }
-.strip-sep { color: var(--line); }
-.card {
-  background: var(--surface);
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-md);
-  padding: var(--space-5);
-}
-.card h3 { font-size: var(--text-sm); font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-dark); margin-bottom: var(--space-4); }
+/* today-card 안쪽 여백과 같은 선에서 시작하도록 좌우만 맞춘다. */
+.card { padding: 0 var(--space-5); }
+.card + .card { margin-top: var(--space-2); }
 .two-week-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -351,7 +334,6 @@ onMounted(fetchData)
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  background: var(--surface-2);
   overflow: hidden;
 }
 .day-date {
@@ -369,34 +351,22 @@ onMounted(fetchData)
   margin-bottom: auto;
   object-fit: contain;
 }
-.accomplish-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-}
-.accomplish-header h3 { margin-bottom: 0; }
+/* 안 보일 때도 자리를 잡아둬 문구가 뜰 때 아래가 밀리지 않게 한다. */
 .done-notice {
   visibility: hidden;
   font-size: var(--text-xs);
   font-weight: 500;
-  color: var(--ink-4);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 60%;
-  text-align: right;
-}
-.done-notice.visible {
-  visibility: visible;
+  line-height: 1.2;
   color: var(--accent-dark);
+  margin-bottom: var(--space-3);
 }
+.done-notice.visible { visibility: visible; }
+/* stretch 여야 토글이 날짜칸 높이를 따라간다. 고정값은 폰트가 바뀌면 어긋난다. */
 .accomplish-row {
   display: flex;
-  align-items: center;
+  align-items: stretch;
   gap: var(--space-2);
-  margin-bottom: var(--space-3);
+  margin-bottom: var(--space-2);
 }
 .date-input {
   flex: 1;
@@ -410,32 +380,40 @@ onMounted(fetchData)
 .date-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .toggle {
   display: flex;
-  gap: var(--space-1);
   flex-shrink: 0;
+  gap: 2px;
+  padding: 2px;
+  background: var(--line-3);
+  border-radius: var(--radius-sm);
 }
 .toggle button {
-  border: 1px solid var(--line);
-  background: var(--surface);
-  border-radius: var(--radius-sm);
-  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: transparent;
+  border-radius: 3px;
+  padding: var(--space-1) var(--space-4);
   cursor: pointer;
+  font-family: inherit;
+  /* 고정. 굵기가 바뀌면 글자 폭이 변해 버튼이 흔들린다. */
+  font-weight: 600;
   font-size: var(--text-sm);
-  color: var(--ink-2);
-  font-weight: 500;
-  transition: all 0.15s;
+  color: var(--ink-3);
   white-space: nowrap;
+  transition: background 0.15s, color 0.15s;
 }
-.toggle button.active { border-color: var(--ink); color: var(--ink); background: var(--surface-3); font-weight: 700; }
+.toggle button:hover:not(.active) { color: var(--ink-2); }
+.toggle button.active {
+  background: var(--accent);
+  color: var(--surface);
+}
 .stamp-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
   gap: var(--space-2);
   margin-bottom: var(--space-3);
 }
-/* 카드 안이라 테두리 대신 배경으로 구분하고, 선택된 하나만 링으로 도드라지게 한다. */
 .stamp-item {
   border: none;
-  background: var(--surface-2);
+  background: transparent;
   border-radius: var(--radius-sm);
   padding: var(--space-2);
   cursor: pointer;
@@ -444,9 +422,9 @@ onMounted(fetchData)
   align-items: center;
   transition: background 0.15s, box-shadow 0.15s;
 }
-.stamp-item:hover { background: var(--surface-3); }
+.stamp-item:hover { background: var(--surface-2); }
 .stamp-item.selected {
-  background: var(--surface-3);
+  background: transparent;
   box-shadow: inset 0 0 0 2px var(--accent);
 }
 .stamp-item img { width: 52px; height: 52px; object-fit: contain; }
@@ -483,6 +461,7 @@ onMounted(fetchData)
 .message { margin-top: var(--space-3); text-align: center; color: var(--accent); font-size: var(--text-sm); font-weight: 500; }
 @media (max-width: 640px) {
   .today-card { gap: var(--space-4); padding: var(--space-4); }
+  .card { padding: 0 var(--space-4); }
   .today-visual { width: 64px; height: 64px; }
   .today-headline { font-size: var(--text-lg); }
   .two-week-grid { gap: 1px; }

@@ -245,15 +245,11 @@ onMounted(async () => {
 
 <template>
   <div class="settings-wrap">
-    <section class="card">
-      <div class="challenge-setup">
-        <form @submit.prevent="addChallenge" class="add-form">
-          <input v-model="newTitle" placeholder="새 챌린지 이름" :disabled="challengeLoading" />
-          <button type="submit" :disabled="challengeLoading">추가</button>
-        </form>
-
-        <div class="palette-row">
-          <div class="palette-list">
+    <section>
+      <h3 class="section-title">Challenges</h3>
+      <form @submit.prevent="addChallenge" class="add-form">
+        <input v-model="newTitle" placeholder="새 챌린지 이름" :disabled="challengeLoading" />
+        <div class="palette-list">
           <button
             v-for="color in accentPalette"
             :key="`new-${color}`"
@@ -265,13 +261,18 @@ onMounted(async () => {
             :aria-label="`테마 ${color}`"
           />
         </div>
-      </div>
-      </div>
+        <button type="submit" :disabled="challengeLoading">추가</button>
+      </form>
 
       <p v-if="challengeMessage" class="msg challenge-msg">{{ challengeMessage }}</p>
 
       <div v-if="challenges.length === 0" class="empty">아직 챌린지가 없습니다.</div>
-      <div v-for="c in challenges" :key="c.id" class="challenge-card" :class="{ inactive: !c.is_active }">
+      <div
+        v-for="c in challenges"
+        :key="c.id"
+        class="challenge-card"
+        :class="{ inactive: !c.is_active, editing: editingChallengeId === c.id }"
+      >
         <div class="card-info">
           <template v-if="editingChallengeId === c.id">
             <input
@@ -286,7 +287,7 @@ onMounted(async () => {
                 v-for="color in accentPalette"
                 :key="`${c.id}-${color}`"
                 type="button"
-                class="palette-chip small"
+                class="palette-chip"
                 :class="{ selected: editingAccentColor === color }"
                 :style="{ background: color }"
                 @click="editingAccentColor = color"
@@ -318,21 +319,39 @@ onMounted(async () => {
               취소
             </button>
           </template>
-          <button
-            v-else
-            @click="startEditingChallenge(c)"
-            class="btn-sm"
-            :disabled="renamingChallengeId === c.id"
-          >
-            수정
-          </button>
-          <button @click="toggleActive(c)" class="btn-sm">{{ c.is_active ? '보관' : '복원' }}</button>
-          <button @click="deleteChallenge(c)" class="btn-sm btn-delete">삭제</button>
+          <template v-else>
+            <button
+              class="icon-btn"
+              title="수정"
+              aria-label="수정"
+              :disabled="renamingChallengeId === c.id"
+              @click="startEditingChallenge(c)"
+            >
+              <FontAwesomeIcon icon="pen" />
+            </button>
+            <button
+              class="icon-btn"
+              :title="c.is_active ? '보관' : '복원'"
+              :aria-label="c.is_active ? '보관' : '복원'"
+              @click="toggleActive(c)"
+            >
+              <FontAwesomeIcon :icon="c.is_active ? 'box-archive' : 'rotate-left'" />
+            </button>
+            <button
+              class="icon-btn icon-btn-danger"
+              title="삭제"
+              aria-label="삭제"
+              @click="deleteChallenge(c)"
+            >
+              <FontAwesomeIcon icon="trash" />
+            </button>
+          </template>
         </div>
       </div>
     </section>
 
-    <section class="card">
+    <section>
+      <h3 class="section-title">Stamps</h3>
       <div class="upload-form">
         <input v-model="newName" placeholder="도장 이름" :disabled="uploading" />
         <input type="file" ref="fileInput" accept="image/*" :disabled="uploading" />
@@ -344,7 +363,12 @@ onMounted(async () => {
 
       <div v-if="activeStamps.length === 0" class="empty">아직 등록된 도장이 없습니다.</div>
       <div v-else class="stamp-list">
-        <div v-for="s in activeStamps" :key="s.id" class="stamp-card">
+        <div
+          v-for="s in activeStamps"
+          :key="s.id"
+          class="stamp-card"
+          :class="{ busy: replacingStampId === s.id }"
+        >
           <img :src="stampUrl(s.image_path)" />
           <span class="stamp-name">{{ s.name }}</span>
           <div class="stamp-actions">
@@ -357,18 +381,22 @@ onMounted(async () => {
               @change="replaceStampImage(s, $event)"
             />
             <button
-              @click="openReplaceDialog(s.id)"
-              class="btn-sm"
+              class="icon-btn"
+              :title="replacingStampId === s.id ? '변경 중...' : '이미지 변경'"
+              aria-label="이미지 변경"
               :disabled="replacingStampId === s.id"
+              @click="openReplaceDialog(s.id)"
             >
-              {{ replacingStampId === s.id ? '변경 중...' : '변경' }}
+              <FontAwesomeIcon icon="pen" />
             </button>
             <button
-              @click="deleteStamp(s)"
-              class="btn-delete"
+              class="icon-btn icon-btn-danger"
+              title="삭제"
+              aria-label="삭제"
               :disabled="replacingStampId === s.id"
+              @click="deleteStamp(s)"
             >
-              삭제
+              <FontAwesomeIcon icon="trash" />
             </button>
           </div>
         </div>
@@ -377,7 +405,7 @@ onMounted(async () => {
       <div v-if="deletedStamps.length > 0" class="deleted-section">
         <button class="deleted-toggle" @click="showDeletedStamps = !showDeletedStamps">
           <span class="toggle-caret" :class="{ open: showDeletedStamps }">▸</span>
-          삭제된 도장 ({{ deletedStamps.length }})
+          Deleted ({{ deletedStamps.length }})
         </button>
 
         <div v-if="showDeletedStamps" class="stamp-list deleted-list">
@@ -408,29 +436,17 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.settings-wrap { display: grid; gap: var(--space-5); }
-h1 { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; margin-bottom: var(--space-1); }
-.card {
-  background: var(--surface);
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-md);
-  padding: var(--space-5);
-}
-.challenge-setup {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-6);
-  align-items: center;
-  margin-bottom: var(--space-4);
-}
+.settings-wrap { display: grid; gap: var(--space-8); }
 .add-form {
   display: flex;
-  gap: var(--space-2);
-  flex: 1;
-  min-width: 240px;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
 }
 .add-form input {
-  flex: 1;
+  flex: 1 1 200px;
+  min-width: 0;
   padding: var(--space-2) var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
@@ -438,7 +454,8 @@ h1 { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; margi
   color: var(--ink);
 }
 .add-form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-.add-form button {
+/* 팔레트 칩도 이 폼 안의 button 이므로 제출 버튼만 골라 잡는다. */
+.add-form button[type="submit"] {
   padding: var(--space-2) var(--space-5);
   background: var(--accent);
   color: var(--surface);
@@ -449,54 +466,55 @@ h1 { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; margi
   font-weight: 600;
   transition: background 0.15s;
 }
-.add-form button:hover { background: var(--accent-dark); }
-.palette-row {
-  display: flex;
-  align-items: center;
-  gap: var(--space-3);
-  flex: 1;
-  min-width: 240px;
-}
-.palette-label {
-  font-size: var(--text-sm);
-  color: var(--ink-2);
-  font-weight: 600;
-  white-space: nowrap;
-}
+.add-form button[type="submit"]:hover { background: var(--accent-dark); }
+/* 같은 줄의 입력칸에 밀리면 칩이 가로로 눌려 원이 찌그러진다. */
 .palette-list {
   display: flex;
   flex-wrap: wrap;
+  flex-shrink: 0;
   gap: var(--space-2);
 }
 .palette-list-inline {
   margin-top: var(--space-2);
 }
+/* 안쪽 실선은 밝은 색에서만 가장자리로 보이고 어두운 색에선 묻힌다. */
 .palette-chip {
-  width: 22px;
-  height: 22px;
-  border: 2px solid var(--surface);
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  padding: 0;
+  border: none;
   border-radius: var(--radius-full);
-  box-shadow: 0 0 0 1px var(--line);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12);
   cursor: pointer;
+  transition: box-shadow 0.15s;
 }
-.palette-chip.small {
-  width: 20px;
-  height: 20px;
+.palette-chip:hover:not(:disabled) {
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12), 0 0 0 2px var(--surface), 0 0 0 3px var(--line);
 }
 .palette-chip.selected {
-  box-shadow: 0 0 0 2px var(--ink);
+  box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12), 0 0 0 2px var(--surface), 0 0 0 3px var(--ink);
 }
+.palette-chip:disabled { cursor: not-allowed; opacity: 0.5; }
 .empty { color: var(--ink-4); text-align: center; padding: var(--space-6) 0; font-size: var(--text-sm); }
-/* 바깥 .card 안에 있으므로 테두리 대신 구분선 하나로 행을 나눈다. */
+/* 구분선을 두면 제목 선과 섞여 줄무늬가 된다. 여백과 hover 로만 나눈다. */
 .challenge-card {
-  border-bottom: 1px solid var(--line-3);
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
   padding: var(--space-3) var(--space-1);
+  border-radius: var(--radius-sm);
   transition: background 0.15s;
 }
-.challenge-card:last-of-type { border-bottom: none; }
-.challenge-card:hover { background: var(--surface-2); }
 .challenge-card.inactive { opacity: 0.5; }
-.card-info { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); }
+.card-info {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  flex: 1;
+  min-width: 0;
+}
 .accent-dot {
   width: 10px;
   height: 10px;
@@ -517,7 +535,7 @@ h1 { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; margi
 .edit-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .card-badge { font-size: var(--text-xs); font-weight: 600; padding: var(--space-05) var(--space-2); border-radius: var(--radius-full); letter-spacing: 0.04em; }
 .card-badge.archived { background: var(--line-3); color: var(--ink-3); }
-.card-actions { display: flex; gap: var(--space-2); }
+.card-actions { display: flex; gap: var(--space-2); flex-shrink: 0; }
 .btn-sm {
   font-size: var(--text-xs);
   padding: var(--space-1) var(--space-3);
@@ -535,17 +553,6 @@ h1 { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; margi
   color: var(--surface);
 }
 .btn-primary:hover { background: var(--accent-dark); color: var(--surface); }
-.btn-delete {
-  font-size: var(--text-xs);
-  padding: var(--space-1) var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--ink-3);
-  cursor: pointer;
-  transition: all 0.15s;
-}
-.btn-delete:hover { border-color: var(--ink); color: var(--ink); }
 .btn-permanent-delete {
   font-size: var(--text-xs);
   padding: var(--space-1) var(--space-3);
@@ -618,24 +625,22 @@ h1 { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; margi
 .upload-form button:disabled { opacity: 0.5; cursor: not-allowed; }
 .msg { font-size: var(--text-sm); color: var(--accent); margin-bottom: var(--space-3); font-weight: 500; }
 .challenge-msg { margin-top: -2px; }
-/* 칸 최소 폭은 아래 stamp-actions 버튼 두 개가 한 줄에 들어가는 값으로 잡는다. */
+/* 행 간격은 타일 안쪽 여백이 이미 벌려주므로 열 간격보다 좁게 둔다. */
 .stamp-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
-  gap: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: var(--space-1) var(--space-3);
 }
-/* 카드 안이라 기본 도장은 테두리 없이 배경으로만, 삭제된 것만 점선으로 예외 표시. */
 .stamp-card {
   text-align: center;
-  background: var(--surface-2);
+  background: transparent;
   border: 1px dashed transparent;
   border-radius: var(--radius-sm);
-  padding: var(--space-3) var(--space-2);
+  padding: var(--space-2);
   transition: background 0.15s;
 }
-.stamp-card:hover { background: var(--surface-3); }
+.stamp-card:hover { background: var(--surface-2); }
 .stamp-card.inactive {
-  background: var(--surface);
   border-color: var(--line);
 }
 .stamp-card.inactive img { filter: grayscale(1); opacity: 0.55; }
@@ -648,7 +653,7 @@ h1 { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; margi
 .stamp-name {
   display: block;
   font-size: var(--text-xs);
-  margin: var(--space-2) 0 var(--space-2);
+  margin: var(--space-1) 0;
   color: var(--ink);
   font-weight: 500;
 }
@@ -682,7 +687,36 @@ h1 { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; margi
   justify-content: center;
   gap: var(--space-2);
 }
-.stamp-actions button { white-space: nowrap; }
+.icon-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--ink-4);
+  font-size: var(--text-xs);
+  cursor: pointer;
+  transition: color 0.15s;
+}
+.icon-btn:hover:not(:disabled) { color: var(--ink); }
+.icon-btn-danger:hover:not(:disabled) { color: var(--danger); }
+.icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+/* 터치 기기는 hover 가 없어 숨기면 누를 방법이 사라진다.
+   업로드 중(busy)·수정 중(editing)에는 상태를 보여야 하므로 계속 띄운다. */
+@media (hover: hover) {
+  .stamp-actions,
+  .card-actions { opacity: 0; transition: opacity 0.15s; }
+  .stamp-card:hover .stamp-actions,
+  .stamp-card.busy .stamp-actions,
+  .stamp-actions:focus-within,
+  .challenge-card:hover .card-actions,
+  .challenge-card.editing .card-actions,
+  .card-actions:focus-within { opacity: 1; }
+  .challenge-card:hover { background: var(--surface-2); }
+}
 .sr-only {
   position: absolute;
   width: 1px;

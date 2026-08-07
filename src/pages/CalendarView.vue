@@ -182,11 +182,15 @@ watch(selectedChallengeId, fetchData)
   background: var(--ink);
   color: var(--surface);
   cursor: pointer;
-  display: none;
   z-index: 10;
+  transition: opacity 0.15s;
 }
-.cal-cell:hover .btn-del-small {
-  display: block;
+/* 터치 기기는 hover 가 없어 숨기면 누를 방법이 사라진다.
+   focus-visible 이 없으면 키보드로 보이지 않는 버튼에 초점이 갇힌다. */
+@media (hover: hover) {
+  .btn-del-small { opacity: 0; }
+  .cal-cell:hover .btn-del-small,
+  .btn-del-small:focus-visible { opacity: 1; }
 }
 @media (max-width: 640px) {
   .month-nav {

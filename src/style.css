@@ -66,3 +66,23 @@ body {
 #app {
   min-height: 100vh;
 }
+
+/* --accent-dark 는 #app-wrapper 에서 상속돼 내려온다. */
+.section-title {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--accent-dark);
+  margin-bottom: var(--space-6);
+}
+.section-title::before,
+.section-title::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--line-2);
+}
