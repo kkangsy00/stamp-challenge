@@ -205,14 +205,10 @@ watch(selectedChallengeId, async () => {
 }
 .btn-del:hover { color: var(--danger); }
 
-/* 터치 기기는 hover 가 없어 숨기면 누를 방법이 사라진다.
-   focus-visible 이 없으면 키보드로 보이지 않는 버튼에 초점이 갇힌다. */
-@media (hover: hover) {
-  .btn-del { opacity: 0; }
-  .round-card:hover { background: var(--surface-2); }
-  .round-card:hover .btn-del,
-  .btn-del:focus-visible { opacity: 1; }
-}
+.btn-del { opacity: 0; }
+.round-card:hover { background: var(--surface-2); }
+.round-card:hover .btn-del,
+.btn-del:focus-visible { opacity: 1; }
 
 @media (max-width: 640px) {
   .round-head {

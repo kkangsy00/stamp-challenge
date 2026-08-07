@@ -636,7 +636,7 @@ onMounted(async () => {
   background: transparent;
   border: 1px dashed transparent;
   border-radius: var(--radius-sm);
-  padding: var(--space-2);
+  padding: var(--space-1);
   transition: background 0.15s;
 }
 .stamp-card:hover { background: var(--surface-2); }
@@ -653,7 +653,7 @@ onMounted(async () => {
 .stamp-name {
   display: block;
   font-size: var(--text-xs);
-  margin: var(--space-1) 0;
+  margin: 0 0 var(--space-05);
   color: var(--ink);
   font-weight: 500;
 }
@@ -704,19 +704,15 @@ onMounted(async () => {
 .icon-btn:hover:not(:disabled) { color: var(--ink); }
 .icon-btn-danger:hover:not(:disabled) { color: var(--danger); }
 .icon-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-/* 터치 기기는 hover 가 없어 숨기면 누를 방법이 사라진다.
-   업로드 중(busy)·수정 중(editing)에는 상태를 보여야 하므로 계속 띄운다. */
-@media (hover: hover) {
-  .stamp-actions,
-  .card-actions { opacity: 0; transition: opacity 0.15s; }
-  .stamp-card:hover .stamp-actions,
-  .stamp-card.busy .stamp-actions,
-  .stamp-actions:focus-within,
-  .challenge-card:hover .card-actions,
-  .challenge-card.editing .card-actions,
-  .card-actions:focus-within { opacity: 1; }
-  .challenge-card:hover { background: var(--surface-2); }
-}
+.stamp-actions,
+.card-actions { opacity: 0; transition: opacity 0.15s; }
+.stamp-card:hover .stamp-actions,
+.stamp-card.busy .stamp-actions,
+.stamp-actions:focus-within,
+.challenge-card:hover .card-actions,
+.challenge-card.editing .card-actions,
+.card-actions:focus-within { opacity: 1; }
+.challenge-card:hover { background: var(--surface-2); }
 .sr-only {
   position: absolute;
   width: 1px;
