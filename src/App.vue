@@ -115,15 +115,15 @@ async function logout() {
 <style scoped>
 .top-layout {
   background: var(--accent);
-  border-bottom: 1px solid #0a0a0a;
-  padding-top: 10px;
+  border-bottom: 1px solid var(--ink);
+  padding-top: var(--space-3);
 }
 
 .top-actions-row {
   display: flex;
   justify-content: flex-end;
   align-items: center;
-  padding: 4px 24px 10px;
+  padding: var(--space-1) var(--space-6) var(--space-3);
   background: var(--accent);
   border-bottom: 1px solid var(--accent-dark);
 }
@@ -132,8 +132,8 @@ async function logout() {
   display: flex;
   justify-content: center;
   align-items: center;
-  padding: 12px 24px 10px;
-  background: #fff;
+  padding: var(--space-3) var(--space-6) var(--space-3);
+  background: var(--surface);
 }
 
 .challenge-select-wrap {
@@ -149,9 +149,9 @@ async function logout() {
   right: 24px;
   top: 50%;
   transform: translateY(-50%);
-  font-size: 0.92rem;
+  font-size: var(--text-base);
   font-weight: 700;
-  color: #111;
+  color: var(--ink);
   z-index: 2;
   pointer-events: none;
 }
@@ -160,15 +160,15 @@ async function logout() {
   position: relative;
   z-index: 1;
   width: 100%;
-  padding: 8px 44px;
-  border: 1px solid #d4d4d4;
-  border-radius: 999px;
-  background: #fff;
-  font-size: 1.1rem;
+  padding: var(--space-2) 44px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-full);
+  background: var(--surface);
+  font-size: var(--text-base);
   font-weight: 600;
-  font-family: 'Avenir Next', 'Segoe UI', 'Inter', 'Helvetica Neue', sans-serif;
+  font-family: inherit;
   letter-spacing: 0.2em;
-  color: #525252;
+  color: var(--ink-2);
   text-align: center;
   text-align-last: center;
   appearance: none;
@@ -183,7 +183,7 @@ async function logout() {
 
 .right-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--space-3);
   align-items: center;
 }
 
@@ -195,14 +195,14 @@ async function logout() {
   height: 40px;
   border: none;
   background: transparent;
-  color: #d9e4ef;
-  font-size: 1.3rem;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: var(--text-lg);
   cursor: pointer;
   transition: color 0.15s;
 }
 
 .icon-button:hover {
-  color: #fff;
+  color: var(--surface);
 }
 
 .icon-button.settings-button {
@@ -216,21 +216,21 @@ async function logout() {
 .menu-row {
   display: flex;
   gap: 0;
-  padding: 0 24px;
-  background: #fff;
+  padding: 0 var(--space-6);
+  background: var(--surface);
 }
 
 .menu-row a {
   text-decoration: none;
-  color: #525252;
-  font-size: 0.88rem;
+  color: var(--ink-2);
+  font-size: var(--text-sm);
   font-weight: 500;
-  padding: 10px 16px;
+  padding: var(--space-3) var(--space-4);
   letter-spacing: 0.02em;
   border-bottom: 2px solid transparent;
   transition: color 0.15s;
 }
-.menu-row a:hover { color: #0a0a0a; }
+.menu-row a:hover { color: var(--ink); }
 
 .menu-row a.router-link-active {
   color: var(--accent);
@@ -241,28 +241,28 @@ async function logout() {
 .main-content {
   max-width: 960px;
   margin: 0 auto;
-  padding: 28px 20px;
+  padding: var(--space-8) var(--space-5);
 }
 
 @media (max-width: 640px) {
   .top-actions-row {
-    padding: 12px 16px;
+    padding: var(--space-3) var(--space-4);
     justify-content: flex-end;
   }
-  .top-select-row { padding: 10px 16px 8px; }
-  .menu-row { padding: 0 16px; }
+  .top-select-row { padding: var(--space-3) var(--space-4) var(--space-2); }
+  .menu-row { padding: 0 var(--space-4); }
   .challenge-select-wrap {
     width: 100%;
   }
   .challenge-select-wrap::after {
     right: 14px;
-    font-size: 0.88rem;
+    font-size: var(--text-sm);
   }
   .challenge-select {
     width: 100%;
     min-width: 0;
-    font-size: 1rem;
-    padding: 10px 38px;
+    font-size: var(--text-base);
+    padding: var(--space-3) 38px;
   }
 }
 </style>

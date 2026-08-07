@@ -26,7 +26,6 @@ export async function loadChallenges() {
   inFlight = (async () => {
     challenges.value = await listActiveChallenges()
     loaded.value = true
-    // 선택이 비었으면 첫 활성 챌린지를 기본 선택.
     if (!selectedChallengeId.value && challenges.value.length > 0) {
       selectedChallengeId.value = challenges.value[0].id
     }
@@ -39,7 +38,6 @@ export async function loadChallenges() {
   }
 }
 
-// 선택된 챌린지 id를 보장한다(없으면 목록을 로드해 첫 항목 선택). id 또는 ''를 반환.
 export async function ensureSelected() {
   if (selectedChallengeId.value) return selectedChallengeId.value
   if (!loaded.value) await loadChallenges()

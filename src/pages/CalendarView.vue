@@ -5,7 +5,6 @@ import { useChallenges } from '../composables/useChallenges.js'
 import { stampPublicUrl } from '../api/stamps.js'
 import { listRecordsByChallenge, removeRecord } from '../api/records.js'
 
-// 챌린지는 공유 상태(currentChallenge)를 그대로 쓴다 — 재조회 불필요.
 const { selectedChallengeId, currentChallenge, ensureSelected } = useChallenges()
 
 const records = ref([])
@@ -21,14 +20,12 @@ async function fetchData() {
   records.value = await listRecordsByChallenge(cid, { ascending: true })
 }
 
-// 날짜별 기록 맵
 const recordMap = computed(() => {
   const map = {}
   records.value.forEach(r => { map[r.achieved_on] = r })
   return map
 })
 
-// 날짜 → 도장 public URL. 템플릿에서 바로 참조할 수 있게 미리 만든다.
 const urlMap = computed(() => {
   const map = {}
   for (const r of records.value) {
@@ -37,16 +34,13 @@ const urlMap = computed(() => {
   return map
 })
 
-// 달력 셀 생성
 const calendarDays = computed(() => {
   const start = currentMonth.value.startOf('month')
   const end = currentMonth.value.endOf('month')
   const startDay = start.day() // 0=일요일
 
   const days = []
-  // 앞쪽 빈 칸
   for (let i = 0; i < startDay; i++) days.push(null)
-  // 날짜
   for (let d = 1; d <= end.date(); d++) {
     const dateStr = start.date(d).format('YYYY-MM-DD')
     days.push(dateStr)
@@ -73,18 +67,15 @@ watch(selectedChallengeId, fetchData)
 <template>
   <div v-if="currentChallenge">
 
-    <!-- 월 이동 -->
     <div class="month-nav">
       <button @click="prevMonth">◀</button>
       <span class="month-label">{{ monthLabel }}</span>
       <button @click="nextMonth">▶</button>
     </div>
 
-    <!-- 요일 헤더 -->
     <div class="cal-grid">
       <div v-for="d in ['SUN','MON','TUE','WED','THU','FRI','SAT']" :key="d" class="cal-header">{{ d }}</div>
 
-      <!-- 날짜 셀 -->
       <div v-for="(day, i) in calendarDays" :key="i" class="cal-cell">
         <template v-if="day">
           <span class="cal-date">{{ dayjs(day).date() }}</span>
@@ -99,8 +90,6 @@ watch(selectedChallengeId, fetchData)
         </template>
       </div>
     </div>
-
-    <router-link :to="{ name: 'Home', query: selectedChallengeId ? { c: selectedChallengeId } : {} }" class="back-link">← 돌아가기</router-link>
   </div>
 </template>
 
@@ -109,21 +98,21 @@ watch(selectedChallengeId, fetchData)
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 20px;
-  margin-bottom: 16px;
+  gap: var(--space-5);
+  margin-bottom: var(--space-4);
 }
 .month-nav button {
   background: none;
-  border: 1px solid #d4d4d4;
-  border-radius: 4px;
-  padding: 5px 14px;
+  border: none;
+  padding: var(--space-1) var(--space-3);
   cursor: pointer;
-  font-size: 0.85rem;
-  color: #0a0a0a;
-  transition: background 0.15s;
+  font-size: var(--text-base);
+  line-height: 1;
+  color: var(--accent);
+  transition: color 0.15s;
 }
-.month-nav button:hover { background: #f5f5f5; }
-.month-label { font-size: 1rem; font-weight: 700; letter-spacing: -0.01em; }
+.month-nav button:hover { color: var(--accent-dark); }
+.month-label { font-size: var(--text-base); font-weight: 700; letter-spacing: -0.01em; }
 .cal-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -131,32 +120,32 @@ watch(selectedChallengeId, fetchData)
 }
 .cal-header {
   text-align: center;
-  font-size: clamp(0.56rem, 1.6vw, 0.75rem);
+  font-size: var(--text-fluid-2xs);
   font-weight: 600;
   letter-spacing: 0.05em;
   text-transform: uppercase;
-  color: #a3a3a3;
+  color: var(--ink-4);
   padding: clamp(4px, 1vw, 8px) 0;
 }
 .cal-cell {
   min-width: 0;
   min-height: clamp(85px, 14vw, 160px);
   aspect-ratio: 1 / 1.15;
-  border: 1px solid #f0f0f0;
-  border-radius: 4px;
+  border: 1px solid var(--line-3);
+  border-radius: var(--radius-sm);
   padding: clamp(2px, 0.4vw, 4px) 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: flex-start;
-  background: #fff;
+  background: var(--surface);
   overflow: hidden;
   transition: background 0.15s;
 }
-.cal-cell:hover { background: #fafafa; }
+.cal-cell:hover { background: var(--surface-2); }
 .cal-date {
-  font-size: clamp(0.62rem, 1.9vw, 0.85rem);
-  color: #a3a3a3;
+  font-size: var(--text-fluid-xs);
+  color: var(--ink-4);
   font-weight: 500;
   margin-bottom: clamp(2px, 0.6vw, 4px);
   line-height: 1;
@@ -184,14 +173,14 @@ watch(selectedChallengeId, fetchData)
   right: 2px;
   width: 16px;
   height: 16px;
-  font-size: 9px;
+  font-size: var(--text-2xs);
   line-height: 16px;
   text-align: center;
   padding: 0;
   border: none;
   border-radius: 50%;
-  background: #0a0a0a;
-  color: #fff;
+  background: var(--ink);
+  color: var(--surface);
   cursor: pointer;
   display: none;
   z-index: 10;
@@ -199,25 +188,15 @@ watch(selectedChallengeId, fetchData)
 .cal-cell:hover .btn-del-small {
   display: block;
 }
-.back-link {
-  display: inline-block;
-  margin-top: 24px;
-  color: var(--accent);
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-.back-link:hover { text-decoration: underline; }
-
 @media (max-width: 640px) {
   .month-nav {
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: var(--space-3);
+    margin-bottom: var(--space-3);
   }
 
   .month-nav button {
-    padding: 4px 10px;
-    font-size: 0.78rem;
+    padding: var(--space-1) var(--space-2);
+    font-size: var(--text-base);
   }
 
   .cal-grid {
@@ -227,7 +206,7 @@ watch(selectedChallengeId, fetchData)
   .cal-cell {
     aspect-ratio: auto;
     min-height: 72px;
-    padding-top: 3px;
+    padding-top: var(--space-1);
   }
 
   .cal-stamp {

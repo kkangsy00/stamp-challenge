@@ -27,7 +27,6 @@ const router = createRouter({
   routes,
 })
 
-// 인증 가드: 로그인 안 되어 있으면 /login 으로.
 // 세션은 최초 1회만 네트워크/스토리지에서 읽고 이후엔 캐시를 본다.
 router.beforeEach(async (to) => {
   if (to.meta.requiresAuth === false) return true

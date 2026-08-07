@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import {
   listChallenges,
   createChallenge,
@@ -47,6 +47,10 @@ const newName = ref('')
 const fileInput = ref(null)
 const stampFileInputs = ref({})
 const message = ref('')
+const showDeletedStamps = ref(false)
+
+const activeStamps = computed(() => stamps.value.filter(s => s.is_active))
+const deletedStamps = computed(() => stamps.value.filter(s => !s.is_active))
 
 // 설정 화면은 비활성 챌린지도 보여주므로 전체 목록을 가져온다.
 async function fetchChallenges() {
@@ -295,9 +299,7 @@ onMounted(async () => {
             <span class="accent-dot" :style="{ background: c.accent_color }" />
             <span class="card-title">{{ c.title }}</span>
           </template>
-          <span class="card-badge" :class="c.is_active ? 'active' : 'archived'">
-            {{ c.is_active ? '진행중' : '보관' }}
-          </span>
+          <span v-if="!c.is_active" class="card-badge archived">보관</span>
         </div>
         <div class="card-actions">
           <template v-if="editingChallengeId === c.id">
@@ -340,55 +342,64 @@ onMounted(async () => {
       </div>
       <p v-if="message" class="msg">{{ message }}</p>
 
-      <div v-if="stamps.length === 0" class="empty">아직 등록된 도장이 없습니다.</div>
-      <div class="stamp-list">
-        <div v-for="s in stamps" :key="s.id" class="stamp-card" :class="{ inactive: !s.is_active }">
+      <div v-if="activeStamps.length === 0" class="empty">아직 등록된 도장이 없습니다.</div>
+      <div v-else class="stamp-list">
+        <div v-for="s in activeStamps" :key="s.id" class="stamp-card">
           <img :src="stampUrl(s.image_path)" />
           <span class="stamp-name">{{ s.name }}</span>
-          <span class="stamp-badge" :class="s.is_active ? 'active' : 'inactive'">
-            {{ s.is_active ? '사용중' : '삭제됨' }}
-          </span>
           <div class="stamp-actions">
             <input
               :ref="el => setStampFileInputRef(s.id, el)"
               type="file"
               class="sr-only"
               accept="image/*"
-              :disabled="replacingStampId === s.id || permanentlyDeletingStampId === s.id || !s.is_active"
+              :disabled="replacingStampId === s.id"
               @change="replaceStampImage(s, $event)"
             />
             <button
-              v-if="s.is_active"
               @click="openReplaceDialog(s.id)"
               class="btn-sm"
-              :disabled="replacingStampId === s.id || permanentlyDeletingStampId === s.id"
+              :disabled="replacingStampId === s.id"
             >
               {{ replacingStampId === s.id ? '변경 중...' : '변경' }}
             </button>
             <button
-              v-if="s.is_active"
               @click="deleteStamp(s)"
               class="btn-delete"
-              :disabled="replacingStampId === s.id || permanentlyDeletingStampId === s.id"
+              :disabled="replacingStampId === s.id"
             >
               삭제
             </button>
-            <template v-else>
+          </div>
+        </div>
+      </div>
+
+      <div v-if="deletedStamps.length > 0" class="deleted-section">
+        <button class="deleted-toggle" @click="showDeletedStamps = !showDeletedStamps">
+          <span class="toggle-caret" :class="{ open: showDeletedStamps }">▸</span>
+          삭제된 도장 ({{ deletedStamps.length }})
+        </button>
+
+        <div v-if="showDeletedStamps" class="stamp-list deleted-list">
+          <div v-for="s in deletedStamps" :key="s.id" class="stamp-card inactive">
+            <img :src="stampUrl(s.image_path)" />
+            <span class="stamp-name">{{ s.name }}</span>
+            <div class="stamp-actions">
               <button
                 @click="restoreStamp(s)"
                 class="btn-sm"
-                :disabled="replacingStampId === s.id || permanentlyDeletingStampId === s.id"
+                :disabled="permanentlyDeletingStampId === s.id"
               >
                 복원
               </button>
               <button
                 @click="permanentlyDeleteStamp(s)"
                 class="btn-permanent-delete"
-                :disabled="replacingStampId === s.id || permanentlyDeletingStampId === s.id"
+                :disabled="permanentlyDeletingStampId === s.id"
               >
                 {{ permanentlyDeletingStampId === s.id ? '삭제 중...' : '영구삭제' }}
               </button>
-            </template>
+            </div>
           </div>
         </div>
       </div>
@@ -397,44 +408,44 @@ onMounted(async () => {
 </template>
 
 <style scoped>
-.settings-wrap { display: grid; gap: 20px; }
-h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 4px; }
+.settings-wrap { display: grid; gap: var(--space-5); }
+h1 { font-size: var(--text-lg); font-weight: 700; letter-spacing: -0.02em; margin-bottom: var(--space-1); }
 .card {
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 6px;
-  padding: 20px;
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
 }
 .challenge-setup {
   display: flex;
   flex-wrap: wrap;
-  gap: 24px;
+  gap: var(--space-6);
   align-items: center;
-  margin-bottom: 14px;
+  margin-bottom: var(--space-4);
 }
 .add-form {
   display: flex;
-  gap: 8px;
+  gap: var(--space-2);
   flex: 1;
   min-width: 240px;
 }
 .add-form input {
   flex: 1;
-  padding: 8px 12px;
-  border: 1px solid #d4d4d4;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  color: #0a0a0a;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--ink);
 }
 .add-form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .add-form button {
-  padding: 8px 18px;
+  padding: var(--space-2) var(--space-5);
   background: var(--accent);
-  color: #fff;
+  color: var(--surface);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   transition: background 0.15s;
 }
@@ -442,30 +453,30 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
 .palette-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: var(--space-3);
   flex: 1;
   min-width: 240px;
 }
 .palette-label {
-  font-size: 0.84rem;
-  color: #525252;
+  font-size: var(--text-sm);
+  color: var(--ink-2);
   font-weight: 600;
   white-space: nowrap;
 }
 .palette-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: var(--space-2);
 }
 .palette-list-inline {
-  margin-top: 8px;
+  margin-top: var(--space-2);
 }
 .palette-chip {
   width: 22px;
   height: 22px;
-  border: 2px solid #fff;
-  border-radius: 999px;
-  box-shadow: 0 0 0 1px #d4d4d4;
+  border: 2px solid var(--surface);
+  border-radius: var(--radius-full);
+  box-shadow: 0 0 0 1px var(--line);
   cursor: pointer;
 }
 .palette-chip.small {
@@ -473,85 +484,83 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
   height: 20px;
 }
 .palette-chip.selected {
-  box-shadow: 0 0 0 2px #0a0a0a;
+  box-shadow: 0 0 0 2px var(--ink);
 }
-.empty { color: #a3a3a3; text-align: center; padding: 24px 0; font-size: 0.88rem; }
+.empty { color: var(--ink-4); text-align: center; padding: var(--space-6) 0; font-size: var(--text-sm); }
+/* 바깥 .card 안에 있으므로 테두리 대신 구분선 하나로 행을 나눈다. */
 .challenge-card {
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
-  padding: 12px 14px;
-  margin-bottom: 6px;
+  border-bottom: 1px solid var(--line-3);
+  padding: var(--space-3) var(--space-1);
   transition: background 0.15s;
 }
-.challenge-card:hover { background: #fafafa; }
+.challenge-card:last-of-type { border-bottom: none; }
+.challenge-card:hover { background: var(--surface-2); }
 .challenge-card.inactive { opacity: 0.5; }
-.card-info { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; }
+.card-info { display: flex; align-items: center; flex-wrap: wrap; gap: var(--space-2); margin-bottom: var(--space-2); }
 .accent-dot {
   width: 10px;
   height: 10px;
-  border-radius: 999px;
+  border-radius: var(--radius-full);
   flex-shrink: 0;
 }
-.card-title { font-weight: 600; font-size: 0.92rem; color: #0a0a0a; }
+.card-title { font-weight: 600; font-size: var(--text-base); color: var(--ink); }
 .edit-input {
   flex: 1 1 220px;
   min-width: 0;
-  padding: 7px 10px;
-  border: 1px solid #d4d4d4;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  color: #0a0a0a;
-  background: #fff;
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--ink);
+  background: var(--surface);
 }
 .edit-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-.card-badge { font-size: 0.72rem; font-weight: 600; padding: 2px 8px; border-radius: 20px; letter-spacing: 0.04em; }
-.card-badge.active { background: #0a0a0a; color: #fff; }
-.card-badge.archived { background: #f0f0f0; color: #737373; }
-.card-actions { display: flex; gap: 6px; }
+.card-badge { font-size: var(--text-xs); font-weight: 600; padding: var(--space-05) var(--space-2); border-radius: var(--radius-full); letter-spacing: 0.04em; }
+.card-badge.archived { background: var(--line-3); color: var(--ink-3); }
+.card-actions { display: flex; gap: var(--space-2); }
 .btn-sm {
-  font-size: 0.78rem;
-  padding: 4px 10px;
-  border: 1px solid #d4d4d4;
-  border-radius: 4px;
-  background: #fff;
-  color: #525252;
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-2);
   cursor: pointer;
   transition: all 0.15s;
 }
-.btn-sm:hover { background: #f5f5f5; color: #0a0a0a; }
+.btn-sm:hover { background: var(--surface-3); color: var(--ink); }
 .btn-primary {
   background: var(--accent);
   border-color: var(--accent);
-  color: #fff;
+  color: var(--surface);
 }
-.btn-primary:hover { background: var(--accent-dark); color: #fff; }
+.btn-primary:hover { background: var(--accent-dark); color: var(--surface); }
 .btn-delete {
-  font-size: 0.78rem;
-  padding: 4px 10px;
-  border: 1px solid #d4d4d4;
-  border-radius: 4px;
-  background: #fff;
-  color: #737373;
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-3);
   cursor: pointer;
   transition: all 0.15s;
 }
-.btn-delete:hover { border-color: #0a0a0a; color: #0a0a0a; }
+.btn-delete:hover { border-color: var(--ink); color: var(--ink); }
 .btn-permanent-delete {
-  font-size: 0.78rem;
-  padding: 4px 10px;
-  border: 1.5px solid #dc2626;
-  border-radius: 4px;
-  background: #fff;
-  color: #dc2626;
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-3);
+  border: 1.5px solid var(--danger);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--danger);
   cursor: pointer;
   transition: all 0.15s;
   font-weight: 500;
 }
 .btn-permanent-delete:hover:not(:disabled) {
-  border-color: #991b1b;
-  color: #991b1b;
-  background: #fef2f2;
+  border-color: var(--danger-dark);
+  color: var(--danger-dark);
+  background: var(--danger-bg);
 }
 .btn-permanent-delete:disabled {
   opacity: 0.5;
@@ -560,70 +569,77 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
 .upload-form {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 .upload-form input:first-child {
   flex: 1;
   min-width: 120px;
   height: 38px;
-  padding: 0 12px;
-  border: 1px solid #d4d4d4;
-  border-radius: 4px;
-  font-size: 0.9rem;
-  color: #0a0a0a;
+  padding: 0 var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  color: var(--ink);
 }
 .upload-form input:first-child:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .upload-form input[type="file"] {
   height: 38px;
-  border: 1px solid #d4d4d4;
-  border-radius: 4px;
-  background: #fff;
-  color: #525252;
-  font-size: 0.88rem;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
   padding: 0;
 }
 .upload-form input[type="file"]::file-selector-button {
   height: 100%;
-  padding: 0 12px;
+  padding: 0 var(--space-3);
   border: none;
-  border-right: 1px solid #d4d4d4;
-  background: #f5f5f5;
-  color: #0a0a0a;
-  font-size: 0.88rem;
+  border-right: 1px solid var(--line);
+  background: var(--surface-3);
+  color: var(--ink);
+  font-size: var(--text-sm);
   font-weight: 500;
   cursor: pointer;
 }
 .upload-form button {
-  padding: 8px 18px;
+  padding: var(--space-2) var(--space-5);
   background: var(--accent);
-  color: #fff;
+  color: var(--surface);
   border: none;
-  border-radius: 4px;
+  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: 0.88rem;
+  font-size: var(--text-sm);
   font-weight: 600;
   transition: background 0.15s;
 }
 .upload-form button:hover:not(:disabled) { background: var(--accent-dark); }
 .upload-form button:disabled { opacity: 0.5; cursor: not-allowed; }
-.msg { font-size: 0.88rem; color: var(--accent); margin-bottom: 10px; font-weight: 500; }
+.msg { font-size: var(--text-sm); color: var(--accent); margin-bottom: var(--space-3); font-weight: 500; }
 .challenge-msg { margin-top: -2px; }
+/* 칸 최소 폭은 아래 stamp-actions 버튼 두 개가 한 줄에 들어가는 값으로 잡는다. */
 .stamp-list {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(110px, 1fr));
-  gap: 10px;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: var(--space-3);
 }
+/* 카드 안이라 기본 도장은 테두리 없이 배경으로만, 삭제된 것만 점선으로 예외 표시. */
 .stamp-card {
   text-align: center;
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 4px;
-  padding: 12px 8px;
+  background: var(--surface-2);
+  border: 1px dashed transparent;
+  border-radius: var(--radius-sm);
+  padding: var(--space-3) var(--space-2);
   transition: background 0.15s;
 }
-.stamp-card:hover { background: #fafafa; }
-.stamp-card.inactive { opacity: 0.65; }
+.stamp-card:hover { background: var(--surface-3); }
+.stamp-card.inactive {
+  background: var(--surface);
+  border-color: var(--line);
+}
+.stamp-card.inactive img { filter: grayscale(1); opacity: 0.55; }
+.stamp-card.inactive .stamp-name { color: var(--ink-3); }
 .stamp-card img {
   width: 72px;
   height: 72px;
@@ -631,35 +647,42 @@ h1 { font-size: 1.4rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom
 }
 .stamp-name {
   display: block;
-  font-size: 0.8rem;
-  margin: 6px 0 4px;
-  color: #0a0a0a;
+  font-size: var(--text-xs);
+  margin: var(--space-2) 0 var(--space-2);
+  color: var(--ink);
   font-weight: 500;
 }
-.stamp-badge {
-  display: inline-flex;
+.deleted-section { margin-top: var(--space-4); }
+.deleted-toggle {
+  display: flex;
   align-items: center;
-  justify-content: center;
-  min-width: 52px;
-  font-size: 0.72rem;
+  gap: var(--space-2);
+  padding: var(--space-1) 0;
+  border: none;
+  background: none;
+  color: var(--ink-3);
+  font-size: var(--text-sm);
   font-weight: 600;
-  padding: 2px 8px;
-  border-radius: 20px;
-  margin-bottom: 8px;
+  cursor: pointer;
 }
-.stamp-badge.active {
-  background: #0a0a0a;
-  color: #fff;
+.deleted-toggle:hover { color: var(--ink); }
+.toggle-caret {
+  display: inline-block;
+  font-size: var(--text-2xs);
+  transition: transform 0.15s;
 }
-.stamp-badge.inactive {
-  background: #f0f0f0;
-  color: #737373;
+.toggle-caret.open { transform: rotate(90deg); }
+/* '복원 + 영구삭제' 두 버튼이 한 줄에 들어가야 해서 활성 그리드보다 칸을 넓게 잡는다. */
+.deleted-list {
+  margin-top: var(--space-3);
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
 }
 .stamp-actions {
   display: flex;
   justify-content: center;
-  gap: 6px;
+  gap: var(--space-2);
 }
+.stamp-actions button { white-space: nowrap; }
 .sr-only {
   position: absolute;
   width: 1px;

@@ -1,9 +1,8 @@
 import { supabase, getCurrentUserId } from './client.js'
 
-// 화면에서 실제로 쓰는 컬럼만. (예전 CalendarView의 stamps(...) 조인은 미사용이라 제거)
+// 화면에서 실제로 쓰는 컬럼만.
 const COLUMNS = 'id, achieved_on, stamp_snapshot_path, note'
 
-// 특정 챌린지의 기록 목록. fromDate 가 있으면 그 날짜 이후만.
 export async function listRecordsByChallenge(challengeId, { fromDate, ascending = false } = {}) {
   let query = supabase
     .from('challenge_records')

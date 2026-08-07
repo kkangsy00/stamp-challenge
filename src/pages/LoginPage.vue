@@ -26,7 +26,6 @@ async function login() {
   loading.value = false
 }
 
-// 이미 로그인되어 있으면 홈으로
 supabase.auth.getSession().then(({ data }) => {
   if (data.session) router.push('/')
 })
@@ -68,34 +67,34 @@ supabase.auth.getSession().then(({ data }) => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: #fff;
+  background: var(--surface);
 }
 .login-card {
   text-align: center;
-  background: #fff;
-  padding: 48px 36px;
-  border: 1px solid #e5e5e5;
-  border-radius: 6px;
+  background: var(--surface);
+  padding: var(--space-12) var(--space-8);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-md);
   width: 100%;
   max-width: 360px;
 }
 .login-card h1 {
-  font-size: 1.4rem;
+  font-size: var(--text-lg);
   font-weight: 700;
   letter-spacing: -0.02em;
-  margin-bottom: 6px;
+  margin-bottom: var(--space-2);
 }
 .login-form {
   display: flex;
   flex-direction: column;
-  gap: 10px;
+  gap: var(--space-3);
 }
 .login-form input {
-  padding: 10px 14px;
-  border: 1px solid #d4d4d4;
-  border-radius: 4px;
-  font-size: 0.95rem;
-  color: #0a0a0a;
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
+  color: var(--ink);
   text-align: left;
   transition: outline 0.1s;
 }
@@ -104,20 +103,20 @@ supabase.auth.getSession().then(({ data }) => {
   outline-offset: 1px;
 }
 .login-form button {
-  padding: 11px;
+  padding: var(--space-3);
   background: var(--accent);
-  color: #fff;
+  color: var(--surface);
   border: none;
-  border-radius: 4px;
-  font-size: 0.92rem;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-base);
   font-weight: 600;
   cursor: pointer;
   letter-spacing: 0.02em;
   transition: background 0.15s;
-  margin-top: 2px;
+  margin-top: var(--space-05);
 }
 .login-form button:hover:not(:disabled) { background: var(--accent-dark); }
 .login-form button:disabled { opacity: 0.5; cursor: not-allowed; }
-.msg { margin-top: 14px; font-size: 0.88rem; font-weight: 500; }
-.error { color: #0a0a0a; }
+.msg { margin-top: var(--space-4); font-size: var(--text-sm); font-weight: 500; }
+.error { color: var(--ink); }
 </style>

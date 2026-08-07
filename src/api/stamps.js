@@ -21,7 +21,6 @@ export async function listStamps() {
   return data || []
 }
 
-// 달성 화면: 활성 도장만.
 export async function listActiveStamps() {
   const { data } = await supabase
     .from('stamps')
@@ -31,7 +30,6 @@ export async function listActiveStamps() {
   return data || []
 }
 
-// 새 도장 업로드. { error } 를 반환한다.
 export async function uploadStamp({ name, file }) {
   const userId = await getCurrentUserId()
   const filePath = buildStampFilePath(userId, file)
@@ -48,7 +46,7 @@ export async function uploadStamp({ name, file }) {
   return { error: dbErr }
 }
 
-// 도장 이미지 교체 + 기존 기록 스냅샷 경로 갱신. { error } 를 반환한다.
+// 도장 이미지 교체 + 기존 기록 스냅샷 경로 갱신.
 export async function replaceStampImage(stamp, file) {
   const userId = await getCurrentUserId()
   const filePath = buildStampFilePath(userId, file)
@@ -77,7 +75,7 @@ export async function restoreStamp(id) {
   return supabase.from('stamps').update({ is_active: true }).eq('id', id)
 }
 
-// 영구 삭제: 기존 기록 정리 → 스토리지 파일 제거 → 도장 행 삭제. { error } 를 반환한다.
+// 영구 삭제: 기존 기록 정리 → 스토리지 파일 제거 → 도장 행 삭제.
 export async function hardDeleteStamp(stamp) {
   const { error: recordError } = await supabase
     .from('challenge_records')

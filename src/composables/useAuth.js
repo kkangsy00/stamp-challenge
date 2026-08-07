@@ -7,7 +7,6 @@ const ready = ref(false)
 let initialized = false
 
 export function useAuth() {
-  // 최초 1회만 세션을 읽고 변경 구독을 건다.
   if (!initialized) {
     initialized = true
     supabase.auth.getSession().then(({ data }) => {

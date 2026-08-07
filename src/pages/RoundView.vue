@@ -5,7 +5,6 @@ import { useChallenges } from '../composables/useChallenges.js'
 import { stampPublicUrl } from '../api/stamps.js'
 import { countRecords, listRecordsPaged, removeRecord } from '../api/records.js'
 
-// 챌린지는 공유 상태(currentChallenge)를 그대로 쓴다 — 재조회 불필요.
 const { selectedChallengeId, currentChallenge, ensureSelected } = useChallenges()
 
 const records = ref([])
@@ -17,7 +16,6 @@ const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / PAGE_
 const startIndex = computed(() => (currentPage.value - 1) * PAGE_SIZE)
 const endIndex = computed(() => Math.min(startIndex.value + records.value.length, totalCount.value))
 
-// record id → 도장 public URL. 템플릿에서 바로 참조할 수 있게 미리 만든다.
 const urlMap = computed(() => {
   const map = {}
   for (const r of records.value) {
@@ -98,7 +96,7 @@ watch(selectedChallengeId, async () => {
 
     <div class="round-list">
       <div v-for="(r, idx) in records" :key="r.id" class="round-card">
-        <div class="round-no">{{ startIndex + idx + 1 }}회차</div>
+        <div class="round-no">{{ startIndex + idx + 1 }}</div>
         <img
           v-if="urlMap[r.id]"
           :src="urlMap[r.id]"
@@ -111,75 +109,74 @@ watch(selectedChallengeId, async () => {
         <button class="btn-del" @click="deleteRecord(r.id)">삭제</button>
       </div>
     </div>
-
-    <router-link :to="{ name: 'Home', query: selectedChallengeId ? { c: selectedChallengeId } : {} }" class="back-link">← 돌아가기</router-link>
   </div>
 </template>
 
 <style scoped>
-.empty { color: #a3a3a3; text-align: center; padding: 48px 0; font-size: 0.9rem; }
+.empty { color: var(--ink-4); text-align: center; padding: var(--space-12) 0; font-size: var(--text-sm); }
 .round-summary {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-bottom: 10px;
-  color: #525252;
-  font-size: 0.84rem;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+  color: var(--ink-2);
+  font-size: var(--text-sm);
   font-weight: 500;
 }
 .summary-item { white-space: nowrap; }
-.summary-sep { color: #a3a3a3; }
+.summary-sep { color: var(--ink-4); }
 .pager-wrap {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 12px;
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
 }
 .pager-btn {
-  font-size: 0.78rem;
-  padding: 5px 10px;
-  border: 1px solid #d4d4d4;
-  border-radius: 4px;
-  background: #fff;
-  color: #525252;
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-2);
   cursor: pointer;
   transition: all 0.15s;
 }
 .pager-btn:hover:not(:disabled) {
-  border-color: #0a0a0a;
-  color: #0a0a0a;
-  background: #fafafa;
+  border-color: var(--ink);
+  color: var(--ink);
+  background: var(--surface-2);
 }
 .pager-btn:disabled {
   opacity: 0.45;
   cursor: not-allowed;
 }
 .pager-label {
-  font-size: 0.84rem;
-  color: #0a0a0a;
+  font-size: var(--text-sm);
+  color: var(--ink);
   font-weight: 700;
   letter-spacing: 0.02em;
 }
-.round-list { display: flex; flex-direction: column; gap: 8px; }
+.round-list { display: flex; flex-direction: column; gap: var(--space-2); }
 .round-card {
   display: flex;
   align-items: center;
-  gap: 14px;
-  background: #fff;
-  border: 1px solid #e5e5e5;
-  border-radius: 6px;
-  padding: 8px 14px;
+  gap: var(--space-4);
+  background: var(--surface);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-md);
+  padding: var(--space-2) var(--space-4);
   transition: background 0.15s;
 }
-.round-card:hover { background: #fafafa; }
+.round-card:hover { background: var(--surface-2); }
 .round-no {
   font-weight: 700;
-  font-size: 1rem;
-  letter-spacing: 0.04em;
-  color: #525252;
-  min-width: 48px;
-  text-transform: uppercase;
+  font-size: var(--text-xl);
+  letter-spacing: -0.02em;
+  color: var(--line);
+  min-width: 40px;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
 }
 .round-stamp {
   width: 60px;
@@ -189,52 +186,43 @@ watch(selectedChallengeId, async () => {
 .round-info {
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--space-05);
 }
-.round-date { font-size: 0.88rem; color: #0a0a0a; font-weight: 500; }
-.round-note { font-size: 0.78rem; color: #737373; }
+.round-date { font-size: var(--text-sm); color: var(--ink); font-weight: 500; }
+.round-note { font-size: var(--text-xs); color: var(--ink-3); }
 .btn-del {
   margin-left: auto;
-  font-size: 0.75rem;
-  padding: 4px 10px;
-  border: 1px solid #d4d4d4;
-  border-radius: 4px;
-  background: #fff;
-  color: #737373;
+  font-size: var(--text-xs);
+  padding: var(--space-1) var(--space-3);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink-3);
   cursor: pointer;
   transition: all 0.15s;
 }
-.btn-del:hover { border-color: #0a0a0a; color: #0a0a0a; }
-.back-link {
-  display: inline-block;
-  margin-top: 24px;
-  color: var(--accent);
-  text-decoration: none;
-  font-size: 0.85rem;
-  font-weight: 500;
-}
-.back-link:hover { text-decoration: underline; }
+.btn-del:hover { border-color: var(--ink); color: var(--ink); }
 
 @media (max-width: 640px) {
   .round-summary {
-    font-size: 0.78rem;
-    gap: 6px;
+    font-size: var(--text-xs);
+    gap: var(--space-2);
   }
 
   .pager-wrap {
-    gap: 6px;
+    gap: var(--space-2);
   }
 
   .pager-btn {
     flex: 1;
     min-width: 0;
-    font-size: 0.74rem;
-    padding: 5px 8px;
+    font-size: var(--text-xs);
+    padding: var(--space-1) var(--space-2);
   }
 
   .pager-label {
     white-space: nowrap;
-    font-size: 0.8rem;
+    font-size: var(--text-xs);
   }
 }
 </style>
