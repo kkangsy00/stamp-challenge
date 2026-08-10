@@ -81,6 +81,7 @@ watch(selectedChallengeId, async () => {
 
 <template>
   <div v-if="loading" class="sk-list">
+    <div class="sk sk-head"></div>
     <div v-for="i in 8" :key="i" class="sk sk-row"></div>
   </div>
 
@@ -135,6 +136,8 @@ watch(selectedChallengeId, async () => {
   font-variant-numeric: tabular-nums;
 }
 .head-range { color: var(--ink-4); font-variant-numeric: tabular-nums; }
+/* .round-head 자리. 텍스트 한 줄 + padding-bottom + border-bottom. */
+.sk-head { height: calc(var(--text-sm) * 1.6 + var(--space-2) + 1px); }
 .pager {
   display: flex;
   align-items: center;
