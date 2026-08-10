@@ -67,6 +67,29 @@ body {
   min-height: 100vh;
 }
 
+/* 스켈레톤. 크기는 각 페이지가 실제 레이아웃 클래스를 같이 걸어 맞춘다. */
+.sk {
+  background: var(--line-3);
+  border-radius: var(--radius-sm);
+  animation: sk-pulse 1.4s ease-in-out infinite;
+}
+.sk-round { border-radius: var(--radius-full); }
+.sk-line { height: 12px; }
+.sk-row { height: 48px; }
+.sk-tile { height: 96px; }
+.sk-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+@keyframes sk-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.45; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .sk { animation: none; }
+}
+
 /* --accent-dark 는 #app-wrapper 에서 상속돼 내려온다. */
 .section-title {
   display: flex;

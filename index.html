@@ -3,6 +3,8 @@
   <head>
     <meta charset="UTF-8" />
     <link rel="icon" type="image/png" href="/icon.png" />
+    <!-- 파비콘 요청은 우선순위가 낮다. 스플래시가 빈 채로 뜨지 않게 끌어올린다. -->
+    <link rel="preload" as="image" href="/icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
     <link
@@ -10,9 +12,54 @@
       href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/variable/pretendardvariable-dynamic-subset.min.css"
     />
     <title>stamp-challenge</title>
+    <style>
+      /* Vue 가 #app 을 마운트하면서 통째로 지운다. 제거 코드 없음. */
+      .boot {
+        position: fixed;
+        inset: 0;
+        display: grid;
+        place-items: center;
+        background: #fff;
+      }
+      /* 링과 아이콘을 같은 칸에 겹쳐 놓는다. */
+      .boot > * {
+        grid-area: 1 / 1;
+        width: 104px;
+        height: 104px;
+      }
+      .boot-ink {
+        border: 2px solid #50ced2;
+        border-radius: 50%;
+        animation: boot-spread 2s ease-out 0.15s infinite;
+      }
+      .boot-seal {
+        animation: boot-press 2s cubic-bezier(0.2, 0.8, 0.3, 1) 0.15s infinite;
+      }
+      @keyframes boot-press {
+        0% { transform: scale(1.8) rotate(-12deg); opacity: 0; }
+        16% { transform: scale(0.95) rotate(-6deg); opacity: 1; }
+        24% { transform: scale(1.02) rotate(-6deg); }
+        32%, 72% { transform: scale(1) rotate(-6deg); opacity: 1; }
+        100% { transform: scale(1) rotate(-6deg); opacity: 0; }
+      }
+      @keyframes boot-spread {
+        0%, 14% { transform: scale(0.85); opacity: 0; }
+        20% { opacity: 0.3; }
+        60%, 100% { transform: scale(1.45); opacity: 0; }
+      }
+      @media (prefers-reduced-motion: reduce) {
+        .boot-ink { display: none; }
+        .boot-seal { animation: none; }
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div class="boot" role="status" aria-label="불러오는 중">
+        <span class="boot-ink"></span>
+        <img class="boot-seal" src="/icon.png" alt="" />
+      </div>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

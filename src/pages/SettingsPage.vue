@@ -21,6 +21,7 @@ import { loadChallenges } from '../composables/useChallenges.js'
 const DEFAULT_ACCENT = '#1a3a5c'
 
 const challenges = ref([])
+const loading = ref(true)
 const newTitle = ref('')
 const newAccentColor = ref(DEFAULT_ACCENT)
 const challengeLoading = ref(false)
@@ -240,6 +241,7 @@ async function replaceStampImage(s, event) {
 onMounted(async () => {
   await fetchChallenges()
   await fetchStamps()
+  loading.value = false
 })
 </script>
 
@@ -266,7 +268,11 @@ onMounted(async () => {
 
       <p v-if="challengeMessage" class="msg challenge-msg">{{ challengeMessage }}</p>
 
-      <div v-if="challenges.length === 0" class="empty">아직 챌린지가 없습니다.</div>
+      <div v-if="loading" class="sk-list">
+        <div v-for="i in 3" :key="i" class="sk sk-row"></div>
+      </div>
+
+      <div v-else-if="challenges.length === 0" class="empty">아직 챌린지가 없습니다.</div>
       <div
         v-for="c in challenges"
         :key="c.id"
@@ -361,7 +367,11 @@ onMounted(async () => {
       </div>
       <p v-if="message" class="msg">{{ message }}</p>
 
-      <div v-if="activeStamps.length === 0" class="empty">아직 등록된 도장이 없습니다.</div>
+      <div v-if="loading" class="stamp-list">
+        <div v-for="i in 6" :key="i" class="sk sk-tile"></div>
+      </div>
+
+      <div v-else-if="activeStamps.length === 0" class="empty">아직 등록된 도장이 없습니다.</div>
       <div v-else class="stamp-list">
         <div
           v-for="s in activeStamps"

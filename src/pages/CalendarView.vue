@@ -9,15 +9,12 @@ const { selectedChallengeId, currentChallenge, ensureSelected } = useChallenges(
 
 const records = ref([])
 const currentMonth = ref(dayjs().startOf('month'))
+const loading = ref(true)
 
 async function fetchData() {
   const cid = await ensureSelected()
-  if (!cid) {
-    records.value = []
-    return
-  }
-
-  records.value = await listRecordsByChallenge(cid, { ascending: true })
+  records.value = cid ? await listRecordsByChallenge(cid, { ascending: true }) : []
+  loading.value = false
 }
 
 const recordMap = computed(() => {
@@ -65,7 +62,7 @@ watch(selectedChallengeId, fetchData)
 </script>
 
 <template>
-  <div v-if="currentChallenge">
+  <div v-if="loading || currentChallenge">
 
     <div class="month-nav">
       <button @click="prevMonth">◀</button>
@@ -76,19 +73,25 @@ watch(selectedChallengeId, fetchData)
     <div class="cal-grid">
       <div v-for="d in ['SUN','MON','TUE','WED','THU','FRI','SAT']" :key="d" class="cal-header">{{ d }}</div>
 
-      <div v-for="(day, i) in calendarDays" :key="i" class="cal-cell">
-        <template v-if="day">
-          <span class="cal-date">{{ dayjs(day).date() }}</span>
-          <div v-if="recordMap[day]" class="cal-stamp-wrap">
-            <img
-              v-if="urlMap[day]"
-              :src="urlMap[day]"
-              class="cal-stamp"
-            />
-            <button class="btn-del-small" @click="deleteRecord(recordMap[day].id)">✕</button>
-          </div>
-        </template>
-      </div>
+      <template v-if="loading">
+        <div v-for="i in 35" :key="i" class="sk cal-cell"></div>
+      </template>
+
+      <template v-else>
+        <div v-for="(day, i) in calendarDays" :key="i" class="cal-cell">
+          <template v-if="day">
+            <span class="cal-date">{{ dayjs(day).date() }}</span>
+            <div v-if="recordMap[day]" class="cal-stamp-wrap">
+              <img
+                v-if="urlMap[day]"
+                :src="urlMap[day]"
+                class="cal-stamp"
+              />
+              <button class="btn-del-small" @click="deleteRecord(recordMap[day].id)">✕</button>
+            </div>
+          </template>
+        </div>
+      </template>
     </div>
   </div>
 </template>
@@ -143,6 +146,9 @@ watch(selectedChallengeId, fetchData)
   transition: background 0.15s;
 }
 .cal-cell:hover { background: var(--surface-2); }
+/* scoped 셀렉터가 전역 .sk 보다 우선순위가 높아 배경을 다시 지정한다. */
+.cal-cell.sk,
+.cal-cell.sk:hover { background: var(--line-3); }
 .cal-date {
   font-size: var(--text-fluid-xs);
   color: var(--ink-4);

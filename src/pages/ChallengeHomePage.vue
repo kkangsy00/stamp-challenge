@@ -14,6 +14,7 @@ const selectedStampId = ref(null)
 const selectionMode = ref('random')
 const selectedDate = ref(dayjs().format('YYYY-MM-DD'))
 const noteInput = ref('')
+// 최초 진입에만 스켈레톤을 보여준다. 이후 갱신은 기존 화면을 유지.
 const loading = ref(true)
 const saving = ref(false)
 const message = ref('')
@@ -86,7 +87,6 @@ const twoWeekUrlMap = computed(() => {
 const stampImageUrl = stampPublicUrl
 
 async function fetchData() {
-  loading.value = true
   message.value = ''
 
   const cid = await ensureSelected()
@@ -157,7 +157,21 @@ onMounted(fetchData)
 
 <template>
   <div class="home-wrap">
-    <div v-if="loading" class="empty-box">불러오는 중...</div>
+    <template v-if="loading">
+      <section class="today-card">
+        <div class="sk sk-round today-visual"></div>
+        <div class="sk-text">
+          <div class="sk sk-line" style="width: 35%"></div>
+          <div class="sk sk-line" style="width: 60%; height: 20px"></div>
+          <div class="sk sk-line" style="width: 45%"></div>
+        </div>
+      </section>
+      <section class="card">
+        <div class="two-week-grid">
+          <div v-for="i in 14" :key="i" class="sk day-cell"></div>
+        </div>
+      </section>
+    </template>
 
     <template v-else-if="!currentChallenge">
       <div class="empty-box">
@@ -285,6 +299,7 @@ onMounted(fetchData)
   color: var(--line);
 }
 .today-text { min-width: 0; }
+.sk-text { flex: 1; display: grid; gap: var(--space-2); }
 .today-label {
   font-size: var(--text-xs);
   font-weight: 500;

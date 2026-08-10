@@ -11,6 +11,7 @@ const records = ref([])
 const currentPage = ref(1)
 const PAGE_SIZE = 20
 const totalCount = ref(0)
+const loading = ref(true)
 
 const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / PAGE_SIZE)))
 const startIndex = computed(() => (currentPage.value - 1) * PAGE_SIZE)
@@ -53,12 +54,12 @@ async function fetchData() {
     records.value = []
     totalCount.value = 0
     currentPage.value = 1
-    return
+  } else {
+    totalCount.value = await countRecords(cid)
+    currentPage.value = totalPages.value
+    await loadPage()
   }
-
-  totalCount.value = await countRecords(cid)
-  currentPage.value = totalPages.value
-  await loadPage()
+  loading.value = false
 }
 
 async function deleteRecord(id) {
@@ -79,7 +80,11 @@ watch(selectedChallengeId, async () => {
 </script>
 
 <template>
-  <div v-if="currentChallenge">
+  <div v-if="loading" class="sk-list">
+    <div v-for="i in 8" :key="i" class="sk sk-row"></div>
+  </div>
+
+  <div v-else-if="currentChallenge">
     <div v-if="totalCount > 0" class="round-head">
       <span class="head-total">총 <b>{{ totalCount }}</b>회</span>
       <span class="head-range">{{ startIndex + 1 }}–{{ endIndex }}</span>
