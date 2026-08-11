@@ -239,8 +239,7 @@ async function replaceStampImage(s, event) {
 }
 
 onMounted(async () => {
-  await fetchChallenges()
-  await fetchStamps()
+  await Promise.all([fetchChallenges(), fetchStamps()])
   loading.value = false
 })
 </script>
@@ -273,87 +272,89 @@ onMounted(async () => {
       </div>
 
       <div v-else-if="challenges.length === 0" class="empty">아직 챌린지가 없습니다.</div>
-      <div
-        v-for="c in challenges"
-        :key="c.id"
-        class="challenge-card"
-        :class="{ inactive: !c.is_active, editing: editingChallengeId === c.id }"
-      >
-        <div class="card-info">
-          <template v-if="editingChallengeId === c.id">
-            <input
-              v-model="editingTitle"
-              class="edit-input"
-              :disabled="renamingChallengeId === c.id"
-              @keyup.enter="saveChallenge(c)"
-              @keyup.esc="cancelEditingChallenge"
-            />
-            <div class="palette-list palette-list-inline">
-              <button
-                v-for="color in accentPalette"
-                :key="`${c.id}-${color}`"
-                type="button"
-                class="palette-chip"
-                :class="{ selected: editingAccentColor === color }"
-                :style="{ background: color }"
-                @click="editingAccentColor = color"
+      <template v-else>
+        <div
+          v-for="c in challenges"
+          :key="c.id"
+          class="challenge-card"
+          :class="{ inactive: !c.is_active, editing: editingChallengeId === c.id }"
+        >
+          <div class="card-info">
+            <template v-if="editingChallengeId === c.id">
+              <input
+                v-model="editingTitle"
+                class="edit-input"
                 :disabled="renamingChallengeId === c.id"
-                :aria-label="`테마 ${color}`"
+                @keyup.enter="saveChallenge(c)"
+                @keyup.esc="cancelEditingChallenge"
               />
-            </div>
-          </template>
-          <template v-else>
-            <span class="accent-dot" :style="{ background: c.accent_color }" />
-            <span class="card-title">{{ c.title }}</span>
-          </template>
-          <span v-if="!c.is_active" class="card-badge archived">보관</span>
+              <div class="palette-list palette-list-inline">
+                <button
+                  v-for="color in accentPalette"
+                  :key="`${c.id}-${color}`"
+                  type="button"
+                  class="palette-chip"
+                  :class="{ selected: editingAccentColor === color }"
+                  :style="{ background: color }"
+                  @click="editingAccentColor = color"
+                  :disabled="renamingChallengeId === c.id"
+                  :aria-label="`테마 ${color}`"
+                />
+              </div>
+            </template>
+            <template v-else>
+              <span class="accent-dot" :style="{ background: c.accent_color }" />
+              <span class="card-title">{{ c.title }}</span>
+            </template>
+            <span v-if="!c.is_active" class="card-badge archived">보관</span>
+          </div>
+          <div class="card-actions">
+            <template v-if="editingChallengeId === c.id">
+              <button
+                @click="saveChallenge(c)"
+                class="btn-sm btn-primary"
+                :disabled="renamingChallengeId === c.id"
+              >
+                {{ renamingChallengeId === c.id ? '저장 중...' : '저장' }}
+              </button>
+              <button
+                @click="cancelEditingChallenge"
+                class="btn-sm"
+                :disabled="renamingChallengeId === c.id"
+              >
+                취소
+              </button>
+            </template>
+            <template v-else>
+              <button
+                class="icon-btn"
+                title="수정"
+                aria-label="수정"
+                :disabled="renamingChallengeId === c.id"
+                @click="startEditingChallenge(c)"
+              >
+                <FontAwesomeIcon icon="pen" />
+              </button>
+              <button
+                class="icon-btn"
+                :title="c.is_active ? '보관' : '복원'"
+                :aria-label="c.is_active ? '보관' : '복원'"
+                @click="toggleActive(c)"
+              >
+                <FontAwesomeIcon :icon="c.is_active ? 'box-archive' : 'rotate-left'" />
+              </button>
+              <button
+                class="icon-btn icon-btn-danger"
+                title="삭제"
+                aria-label="삭제"
+                @click="deleteChallenge(c)"
+              >
+                <FontAwesomeIcon icon="trash" />
+              </button>
+            </template>
+          </div>
         </div>
-        <div class="card-actions">
-          <template v-if="editingChallengeId === c.id">
-            <button
-              @click="saveChallenge(c)"
-              class="btn-sm btn-primary"
-              :disabled="renamingChallengeId === c.id"
-            >
-              {{ renamingChallengeId === c.id ? '저장 중...' : '저장' }}
-            </button>
-            <button
-              @click="cancelEditingChallenge"
-              class="btn-sm"
-              :disabled="renamingChallengeId === c.id"
-            >
-              취소
-            </button>
-          </template>
-          <template v-else>
-            <button
-              class="icon-btn"
-              title="수정"
-              aria-label="수정"
-              :disabled="renamingChallengeId === c.id"
-              @click="startEditingChallenge(c)"
-            >
-              <FontAwesomeIcon icon="pen" />
-            </button>
-            <button
-              class="icon-btn"
-              :title="c.is_active ? '보관' : '복원'"
-              :aria-label="c.is_active ? '보관' : '복원'"
-              @click="toggleActive(c)"
-            >
-              <FontAwesomeIcon :icon="c.is_active ? 'box-archive' : 'rotate-left'" />
-            </button>
-            <button
-              class="icon-btn icon-btn-danger"
-              title="삭제"
-              aria-label="삭제"
-              @click="deleteChallenge(c)"
-            >
-              <FontAwesomeIcon icon="trash" />
-            </button>
-          </template>
-        </div>
-      </div>
+      </template>
     </section>
 
     <section>
