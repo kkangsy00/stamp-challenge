@@ -198,7 +198,7 @@ onMounted(fetchData)
       <section class="card">
         <div class="two-week-grid">
           <div v-for="d in twoWeekDays" :key="d" class="day-cell">
-            <div class="day-date">{{ dayjs(d).format('M/D ddd') }}</div>
+            <div class="day-date">{{ dayjs(d).format('M/D') }}</div>
             <img
               v-if="twoWeekUrlMap[d]"
               :src="twoWeekUrlMap[d]"
@@ -477,7 +477,7 @@ onMounted(fetchData)
 @media (max-width: 640px) {
   .today-card { gap: var(--space-4); padding: var(--space-4); }
   .card { padding: 0 var(--space-4); }
-  .today-visual { width: 64px; height: 64px; }
+  .today-visual { width: clamp(74px, 22vw, 96px); height: clamp(74px, 22vw, 96px); }
   .today-headline { font-size: var(--text-lg); }
   .two-week-grid { gap: 1px; }
   .day-cell {
