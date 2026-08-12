@@ -109,3 +109,49 @@ body {
   height: 1px;
   background: var(--line-2);
 }
+
+/* 폼 컨트롤의 테두리와 포커스 링. 크기·배치는 쓰는 쪽이 정한다. */
+.field {
+  min-width: 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface);
+  color: var(--ink);
+  font-family: inherit;
+  font-size: var(--text-sm);
+}
+.field:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.field::placeholder { color: var(--ink-4); }
+
+/* accent 를 채운 제출 버튼. 크기·폭은 쓰는 쪽이 정한다. */
+.btn-accent {
+  border: none;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--surface);
+  font-family: inherit;
+  font-size: var(--text-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.btn-accent:hover:not(:disabled) { background: var(--accent-dark); }
+.btn-accent:disabled { opacity: 0.5; cursor: not-allowed; }
+
+.empty {
+  padding: var(--space-6) 0;
+  color: var(--ink-4);
+  text-align: center;
+  font-size: var(--text-sm);
+}
+
+/* 챌린지가 없어 화면을 그릴 수 없을 때. 여러 페이지가 같은 문구를 쓴다. */
+.empty-box {
+  background: var(--surface-2);
+  border: 1px solid var(--line-2);
+  border-radius: var(--radius-md);
+  padding: var(--space-8) var(--space-5);
+  text-align: center;
+  color: var(--ink-4);
+  font-size: var(--text-sm);
+}

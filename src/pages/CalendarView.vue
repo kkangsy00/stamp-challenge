@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import dayjs from 'dayjs'
 import { useChallenges } from '../composables/useChallenges.js'
 import { stampPublicUrl } from '../api/stamps.js'
@@ -13,25 +13,19 @@ const loading = ref(true)
 
 async function fetchData() {
   const cid = await ensureSelected()
-  records.value = cid ? await listRecordsByChallenge(cid, { ascending: true }) : []
+  records.value = cid ? await listRecordsByChallenge(cid) : []
   loading.value = false
 }
 
-const recordMap = computed(() => {
-  const map = {}
-  records.value.forEach(r => { map[r.achieved_on] = r })
-  return map
-})
-
-const urlMap = computed(() => {
-  const map = {}
-  for (const r of records.value) {
-    if (r.stamp_snapshot_path) map[r.achieved_on] = stampPublicUrl(r.stamp_snapshot_path)
-  }
-  return map
-})
-
 const calendarDays = computed(() => {
+  const byDate = {}
+  for (const r of records.value) {
+    byDate[r.achieved_on] = {
+      id: r.id,
+      url: r.stamp_snapshot_path ? stampPublicUrl(r.stamp_snapshot_path) : '',
+    }
+  }
+
   const start = currentMonth.value.startOf('month')
   const end = currentMonth.value.endOf('month')
   const startDay = start.day() // 0=일요일
@@ -39,8 +33,7 @@ const calendarDays = computed(() => {
   const days = []
   for (let i = 0; i < startDay; i++) days.push(null)
   for (let d = 1; d <= end.date(); d++) {
-    const dateStr = start.date(d).format('YYYY-MM-DD')
-    days.push(dateStr)
+    days.push({ label: d, record: byDate[start.date(d).format('YYYY-MM-DD')] || null })
   }
   return days
 })
@@ -56,9 +49,7 @@ async function deleteRecord(id) {
   await fetchData()
 }
 
-onMounted(fetchData)
-
-watch(selectedChallengeId, fetchData)
+watch(selectedChallengeId, fetchData, { immediate: true })
 </script>
 
 <template>
@@ -80,19 +71,19 @@ watch(selectedChallengeId, fetchData)
       <template v-else>
         <div v-for="(day, i) in calendarDays" :key="i" class="cal-cell">
           <template v-if="day">
-            <span class="cal-date">{{ dayjs(day).date() }}</span>
-            <div v-if="recordMap[day]" class="cal-stamp-wrap">
-              <img
-                v-if="urlMap[day]"
-                :src="urlMap[day]"
-                class="cal-stamp"
-              />
-              <button class="btn-del-small" @click="deleteRecord(recordMap[day].id)">✕</button>
+            <span class="cal-date">{{ day.label }}</span>
+            <div v-if="day.record" class="cal-stamp-wrap">
+              <img v-if="day.record.url" :src="day.record.url" class="cal-stamp" />
+              <button class="btn-del-small" @click="deleteRecord(day.record.id)">✕</button>
             </div>
           </template>
         </div>
       </template>
     </div>
+  </div>
+
+  <div v-else class="empty-box">
+    활성 챌린지가 없습니다. 설정에서 챌린지를 먼저 만들어주세요.
   </div>
 </template>
 
@@ -189,9 +180,9 @@ watch(selectedChallengeId, fetchData)
   color: var(--surface);
   cursor: pointer;
   z-index: 10;
+  opacity: 0;
   transition: opacity 0.15s;
 }
-.btn-del-small { opacity: 0; }
 .cal-cell:hover .btn-del-small,
 .btn-del-small:focus-visible { opacity: 1; }
 @media (max-width: 640px) {
@@ -200,10 +191,7 @@ watch(selectedChallengeId, fetchData)
     margin-bottom: var(--space-3);
   }
 
-  .month-nav button {
-    padding: var(--space-1) var(--space-2);
-    font-size: var(--text-base);
-  }
+  .month-nav button { padding: var(--space-1) var(--space-2); }
 
   .cal-grid {
     gap: 0;

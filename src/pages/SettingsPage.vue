@@ -46,6 +46,7 @@ const replacingStampId = ref(null)
 const permanentlyDeletingStampId = ref(null)
 const newName = ref('')
 const fileInput = ref(null)
+const selectedFileName = ref('')
 const stampFileInputs = ref({})
 const message = ref('')
 const showDeletedStamps = ref(false)
@@ -138,8 +139,6 @@ async function fetchStamps() {
   stamps.value = await listStamps()
 }
 
-const stampUrl = stampPublicUrl
-
 function setStampFileInputRef(stampId, el) {
   if (el) {
     stampFileInputs.value[stampId] = el
@@ -151,6 +150,10 @@ function setStampFileInputRef(stampId, el) {
 
 function openReplaceDialog(stampId) {
   stampFileInputs.value[stampId]?.click()
+}
+
+function onFileChange(event) {
+  selectedFileName.value = event.target?.files?.[0]?.name ?? ''
 }
 
 async function uploadStamp() {
@@ -170,6 +173,7 @@ async function uploadStamp() {
   } else {
     newName.value = ''
     fileInput.value.value = ''
+    selectedFileName.value = ''
     await fetchStamps()
   }
 
@@ -248,8 +252,13 @@ onMounted(async () => {
   <div class="settings-wrap">
     <section>
       <h3 class="section-title">Challenges</h3>
-      <form @submit.prevent="addChallenge" class="add-form">
-        <input v-model="newTitle" placeholder="새 챌린지 이름" :disabled="challengeLoading" />
+      <form @submit.prevent="addChallenge" class="entry-form">
+        <input
+          v-model="newTitle"
+          class="field"
+          placeholder="새 챌린지 이름"
+          :disabled="challengeLoading"
+        />
         <div class="palette-list">
           <button
             v-for="color in accentPalette"
@@ -262,7 +271,7 @@ onMounted(async () => {
             :aria-label="`테마 ${color}`"
           />
         </div>
-        <button type="submit" :disabled="challengeLoading">추가</button>
+        <button type="submit" class="btn-accent" :disabled="challengeLoading">추가</button>
       </form>
 
       <p v-if="challengeMessage" class="msg challenge-msg">{{ challengeMessage }}</p>
@@ -283,7 +292,7 @@ onMounted(async () => {
             <template v-if="editingChallengeId === c.id">
               <input
                 v-model="editingTitle"
-                class="edit-input"
+                class="field edit-input"
                 :disabled="renamingChallengeId === c.id"
                 @keyup.enter="saveChallenge(c)"
                 @keyup.esc="cancelEditingChallenge"
@@ -359,13 +368,29 @@ onMounted(async () => {
 
     <section>
       <h3 class="section-title">Stamps</h3>
-      <div class="upload-form">
-        <input v-model="newName" placeholder="도장 이름" :disabled="uploading" />
-        <input type="file" ref="fileInput" accept="image/*" :disabled="uploading" />
-        <button @click="uploadStamp" :disabled="uploading">
+      <form @submit.prevent="uploadStamp" class="entry-form">
+        <input
+          v-model="newName"
+          class="field"
+          placeholder="도장 이름"
+          :disabled="uploading"
+        />
+        <!-- 기본 file 컨트롤은 브라우저마다 폭이 제각각이라 줄바꿈을 못 잡는다. 라벨로 감싸 폭을 직접 준다. -->
+        <label class="file-trigger" :class="{ chosen: selectedFileName }">
+          <input
+            type="file"
+            ref="fileInput"
+            class="sr-only"
+            accept="image/*"
+            :disabled="uploading"
+            @change="onFileChange"
+          />
+          <span class="file-label">{{ selectedFileName || '이미지 선택' }}</span>
+        </label>
+        <button type="submit" class="btn-accent" :disabled="uploading">
           {{ uploading ? '업로드 중...' : '업로드' }}
         </button>
-      </div>
+      </form>
       <p v-if="message" class="msg">{{ message }}</p>
 
       <div v-if="loading" class="stamp-list">
@@ -380,7 +405,7 @@ onMounted(async () => {
           class="stamp-card"
           :class="{ busy: replacingStampId === s.id }"
         >
-          <img :src="stampUrl(s.image_path)" />
+          <img :src="stampPublicUrl(s.image_path)" />
           <span class="stamp-name">{{ s.name }}</span>
           <div class="stamp-actions">
             <input
@@ -421,7 +446,7 @@ onMounted(async () => {
 
         <div v-if="showDeletedStamps" class="stamp-list deleted-list">
           <div v-for="s in deletedStamps" :key="s.id" class="stamp-card inactive">
-            <img :src="stampUrl(s.image_path)" />
+            <img :src="stampPublicUrl(s.image_path)" />
             <span class="stamp-name">{{ s.name }}</span>
             <div class="stamp-actions">
               <button
@@ -448,36 +473,40 @@ onMounted(async () => {
 
 <style scoped>
 .settings-wrap { display: grid; gap: var(--space-8); }
-.add-form {
-  display: flex;
-  flex-wrap: wrap;
+/* [입력칸 | 보조 컨트롤 | 제출]. wrap 에 맡기면 폼마다 접히는 줄 수가 달라져 열을 못박는다. */
+.entry-form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   align-items: center;
   gap: var(--space-3);
   margin-bottom: var(--space-4);
 }
-.add-form input {
-  flex: 1 1 200px;
-  min-width: 0;
-  padding: var(--space-2) var(--space-3);
+.field { height: 38px; padding: 0 var(--space-3); }
+.btn-accent { height: 38px; padding: 0 var(--space-5); }
+/* 옆의 입력칸과 구분되게 면을 채워 버튼으로 읽히게 한다. */
+.file-trigger {
+  display: flex;
+  align-items: center;
+  max-width: 220px;
+  height: 38px;
+  padding: 0 var(--space-3);
   border: 1px solid var(--line);
   border-radius: var(--radius-sm);
+  background: var(--surface-3);
+  color: var(--ink-2);
   font-size: var(--text-sm);
-  color: var(--ink);
-}
-.add-form input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-/* 팔레트 칩도 이 폼 안의 button 이므로 제출 버튼만 골라 잡는다. */
-.add-form button[type="submit"] {
-  padding: var(--space-2) var(--space-5);
-  background: var(--accent);
-  color: var(--surface);
-  border: none;
-  border-radius: var(--radius-sm);
   cursor: pointer;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  transition: background 0.15s;
+  transition: all 0.15s;
 }
-.add-form button[type="submit"]:hover { background: var(--accent-dark); }
+.file-trigger:hover { color: var(--ink); }
+.file-trigger:focus-within { outline: 2px solid var(--accent); outline-offset: 1px; }
+.file-trigger.chosen { border-color: var(--accent); color: var(--ink); }
+.file-label {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
 /* 같은 줄의 입력칸에 밀리면 칩이 가로로 눌려 원이 찌그러진다. */
 .palette-list {
   display: flex;
@@ -507,7 +536,6 @@ onMounted(async () => {
   box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.12), 0 0 0 2px var(--surface), 0 0 0 3px var(--ink);
 }
 .palette-chip:disabled { cursor: not-allowed; opacity: 0.5; }
-.empty { color: var(--ink-4); text-align: center; padding: var(--space-6) 0; font-size: var(--text-sm); }
 /* 구분선을 두면 제목 선과 섞여 줄무늬가 된다. 여백과 hover 로만 나눈다. */
 .challenge-card {
   display: flex;
@@ -533,17 +561,7 @@ onMounted(async () => {
   flex-shrink: 0;
 }
 .card-title { font-weight: 600; font-size: var(--text-base); color: var(--ink); }
-.edit-input {
-  flex: 1 1 220px;
-  min-width: 0;
-  padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-  color: var(--ink);
-  background: var(--surface);
-}
-.edit-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+.edit-input { flex: 1 1 220px; }
 .card-badge { font-size: var(--text-xs); font-weight: 600; padding: var(--space-05) var(--space-2); border-radius: var(--radius-full); letter-spacing: 0.04em; }
 .card-badge.archived { background: var(--line-3); color: var(--ink-3); }
 .card-actions { display: flex; gap: var(--space-2); flex-shrink: 0; }
@@ -584,56 +602,6 @@ onMounted(async () => {
   opacity: 0.5;
   cursor: not-allowed;
 }
-.upload-form {
-  display: flex;
-  flex-wrap: wrap;
-  gap: var(--space-2);
-  margin-bottom: var(--space-3);
-}
-.upload-form input:first-child {
-  flex: 1;
-  min-width: 120px;
-  height: 38px;
-  padding: 0 var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-  color: var(--ink);
-}
-.upload-form input:first-child:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-.upload-form input[type="file"] {
-  height: 38px;
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  background: var(--surface);
-  color: var(--ink-2);
-  font-size: var(--text-sm);
-  padding: 0;
-}
-.upload-form input[type="file"]::file-selector-button {
-  height: 100%;
-  padding: 0 var(--space-3);
-  border: none;
-  border-right: 1px solid var(--line);
-  background: var(--surface-3);
-  color: var(--ink);
-  font-size: var(--text-sm);
-  font-weight: 500;
-  cursor: pointer;
-}
-.upload-form button {
-  padding: var(--space-2) var(--space-5);
-  background: var(--accent);
-  color: var(--surface);
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-size: var(--text-sm);
-  font-weight: 600;
-  transition: background 0.15s;
-}
-.upload-form button:hover:not(:disabled) { background: var(--accent-dark); }
-.upload-form button:disabled { opacity: 0.5; cursor: not-allowed; }
 .msg { font-size: var(--text-sm); color: var(--accent); margin-bottom: var(--space-3); font-weight: 500; }
 .challenge-msg { margin-top: -2px; }
 /* 행 간격은 타일 안쪽 여백이 이미 벌려주므로 열 간격보다 좁게 둔다. */
@@ -734,5 +702,18 @@ onMounted(async () => {
   clip: rect(0, 0, 0, 0);
   white-space: nowrap;
   border: 0;
+}
+@media (max-width: 640px) {
+  .entry-form {
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-2) var(--space-3);
+  }
+  .entry-form .field { grid-column: 1 / -1; }
+  .file-trigger { max-width: none; }
+  .btn-accent { padding: 0 var(--space-4); }
+  /* 터치 타깃으로는 18px 이 작다. */
+  .palette-chip { width: 24px; height: 24px; }
+  .palette-list { gap: var(--space-3); }
+  .palette-list-inline { gap: var(--space-2); }
 }
 </style>

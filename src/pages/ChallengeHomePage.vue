@@ -1,5 +1,5 @@
 <script setup>
-import { computed, ref, onMounted, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import dayjs from 'dayjs'
 import { useChallenges } from '../composables/useChallenges.js'
 import { listActiveStamps, stampPublicUrl } from '../api/stamps.js'
@@ -9,7 +9,6 @@ const { selectedChallengeId, currentChallenge, ensureSelected } = useChallenges(
 
 const allRecords = ref([])
 const stamps = ref([])
-const todayRecord = ref(null)
 const selectedStampId = ref(null)
 const selectionMode = ref('random')
 const selectedDate = ref(dayjs().format('YYYY-MM-DD'))
@@ -20,13 +19,15 @@ const saving = ref(false)
 const message = ref('')
 
 const today = computed(() => dayjs().format('YYYY-MM-DD'))
+const todayRecord = computed(() => allRecords.value.find(r => r.achieved_on === today.value) || null)
+const selectedDateRecord = computed(
+  () => allRecords.value.find(r => r.achieved_on === selectedDate.value) || null
+)
 const noticeMessage = computed(() => {
-  if (todayRecord.value && selectedDate.value === today.value) return '오늘은 이미 달성했습니다.'
-  if (selectedDateRecord.value) return '선택한 날짜는 이미 달성했습니다.'
-  return ''
-})
-const selectedDateRecord = computed(() => {
-  return allRecords.value.find(r => r.achieved_on === selectedDate.value) || null
+  if (!selectedDateRecord.value) return ''
+  return selectedDate.value === today.value
+    ? '오늘은 이미 달성했습니다.'
+    : '선택한 날짜는 이미 달성했습니다.'
 })
 const yearCount = computed(() => {
   const y = dayjs().format('YYYY')
@@ -69,22 +70,14 @@ const twoWeekDays = computed(() => {
   return days
 })
 
-const twoWeekRecordMap = computed(() => {
-  const map = {}
-  allRecords.value.forEach(r => { map[r.achieved_on] = r })
-  return map
-})
-
 const twoWeekUrlMap = computed(() => {
   const map = {}
   for (const d of twoWeekDays.value) {
-    const path = twoWeekRecordMap.value[d]?.stamp_snapshot_path
+    const path = allRecords.value.find(r => r.achieved_on === d)?.stamp_snapshot_path
     if (path) map[d] = stampPublicUrl(path)
   }
   return map
 })
-
-const stampImageUrl = stampPublicUrl
 
 async function fetchData() {
   message.value = ''
@@ -93,7 +86,6 @@ async function fetchData() {
   if (!cid) {
     allRecords.value = []
     stamps.value = []
-    todayRecord.value = null
     loading.value = false
     return
   }
@@ -103,7 +95,6 @@ async function fetchData() {
   // 연속 기록이 연말/연초에 끊기지 않도록 올해 시작일보다 넉넉히 앞에서부터 가져온다.
   const fromDate = dayjs().subtract(400, 'day').format('YYYY-MM-DD')
   allRecords.value = await listRecordsByChallenge(cid, { fromDate })
-  todayRecord.value = allRecords.value.find(r => r.achieved_on === today.value) || null
 
   loading.value = false
 }
@@ -150,9 +141,7 @@ async function achieve() {
   saving.value = false
 }
 
-watch(selectedChallengeId, fetchData)
-
-onMounted(fetchData)
+watch(selectedChallengeId, fetchData, { immediate: true })
 </script>
 
 <template>
@@ -180,7 +169,7 @@ onMounted(fetchData)
     </template>
 
     <template v-else>
-      <section class="today-card" :class="{ done: todayRecord }">
+      <section class="today-card">
         <div class="today-visual">
           <img v-if="todayStampUrl" :src="todayStampUrl" class="today-stamp" />
           <div v-else class="today-placeholder">?</div>
@@ -217,7 +206,7 @@ onMounted(fetchData)
             v-model="selectedDate"
             type="date"
             :max="today"
-            class="date-input"
+            class="field date-input"
           />
           <div class="toggle">
             <button :class="{ active: selectionMode === 'random' }" @click="selectionMode = 'random'">랜덤</button>
@@ -235,20 +224,20 @@ onMounted(fetchData)
             :class="{ selected: selectedStampId === s.id }"
             @click="selectedStampId = s.id"
           >
-            <img :src="stampImageUrl(s.image_path)" />
+            <img :src="stampPublicUrl(s.image_path)" />
             <span>{{ s.name }}</span>
           </button>
         </div>
 
         <textarea
           v-model="noteInput"
-          class="note-input"
+          class="field note-input"
           placeholder="Memo"
           rows="2"
           :disabled="saving"
         />
 
-        <button class="achieve-btn" :disabled="saving" @click="achieve">
+        <button class="btn-accent achieve-btn" :disabled="saving" @click="achieve">
           {{ saving ? '기록 중...' : 'Complete!' }}
         </button>
 
@@ -260,15 +249,6 @@ onMounted(fetchData)
 
 <style scoped>
 .home-wrap { display: grid; gap: var(--space-8); }
-.empty-box {
-  background: var(--surface-2);
-  border: 1px solid var(--line-2);
-  border-radius: var(--radius-md);
-  padding: var(--space-8) var(--space-5);
-  text-align: center;
-  color: var(--ink-4);
-  font-size: var(--text-sm);
-}
 .today-card {
   display: flex;
   align-items: center;
@@ -332,7 +312,6 @@ onMounted(fetchData)
 }
 /* today-card 안쪽 여백과 같은 선에서 시작하도록 좌우만 맞춘다. */
 .card { padding: 0 var(--space-5); }
-.card + .card { margin-top: var(--space-2); }
 .two-week-grid {
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
@@ -385,14 +364,8 @@ onMounted(fetchData)
 }
 .date-input {
   flex: 1;
-  min-width: 0;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-  color: var(--ink);
 }
-.date-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
 .toggle {
   display: flex;
   flex-shrink: 0;
@@ -438,47 +411,27 @@ onMounted(fetchData)
   transition: background 0.15s, box-shadow 0.15s;
 }
 .stamp-item:hover { background: var(--surface-2); }
-.stamp-item.selected {
-  background: transparent;
-  box-shadow: inset 0 0 0 2px var(--accent);
-}
+.stamp-item.selected { box-shadow: inset 0 0 0 2px var(--accent); }
 .stamp-item img { width: 52px; height: 52px; object-fit: contain; }
 .stamp-item span { font-size: var(--text-xs); color: var(--ink-2); margin-top: var(--space-1); }
 .note-input {
   width: 100%;
   padding: var(--space-2) var(--space-3);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
-  font-size: var(--text-sm);
-  color: var(--ink);
-  resize: none;
-  font-family: inherit;
-  line-height: 1.5;
   margin-bottom: var(--space-3);
+  resize: none;
+  line-height: 1.5;
 }
-.note-input:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
-.note-input::placeholder { color: var(--ink-4); }
 .achieve-btn {
   width: 100%;
   padding: var(--space-3);
-  border: none;
-  border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: var(--surface);
-  cursor: pointer;
   font-size: var(--text-base);
-  font-weight: 600;
   letter-spacing: 0.02em;
-  transition: background 0.15s;
 }
-.achieve-btn:hover:not(:disabled) { background: var(--accent-dark); }
-.achieve-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 .message { margin-top: var(--space-3); text-align: center; color: var(--accent); font-size: var(--text-sm); font-weight: 500; }
 @media (max-width: 640px) {
   .today-card { gap: var(--space-4); padding: var(--space-4); }
   .card { padding: 0 var(--space-4); }
   .today-visual { width: clamp(74px, 22vw, 96px); height: clamp(74px, 22vw, 96px); }
-  .today-headline { font-size: var(--text-lg); }
   .two-week-grid { gap: 1px; }
   .day-cell {
     aspect-ratio: auto;

@@ -40,14 +40,14 @@ function withChallengeQuery(routeName) {
   return { name: routeName, query: selectedChallengeId.value ? { c: selectedChallengeId.value } : {} }
 }
 
-async function applyChallengeToCurrentRoute() {
-  if (!menuRoutes.includes(String(route.name))) return
+function applyChallengeToCurrentRoute() {
+  if (!isChallengeScopedRoute.value) return
   if (!selectedChallengeId.value) return
 
   const current = String(route.query.c || '')
   if (current === selectedChallengeId.value) return
 
-  await router.replace({
+  router.replace({
     name: String(route.name),
     query: { ...route.query, c: selectedChallengeId.value },
   })
@@ -81,10 +81,10 @@ async function logout() {
     <header v-if="showChallengeUI" class="top-layout">
       <div class="top-actions-row">
         <div class="right-actions">
-          <router-link to="/settings" class="icon-button settings-button" title="Settings">
+          <router-link to="/settings" class="icon-button" title="Settings">
             <FontAwesomeIcon icon="cog" />
           </router-link>
-          <button @click="logout" class="icon-button logout-button" title="Logout">
+          <button @click="logout" class="icon-button" title="Logout">
             <FontAwesomeIcon icon="sign-out-alt" />
           </button>
         </div>
@@ -100,9 +100,9 @@ async function logout() {
       </div>
 
       <div class="menu-row">
-        <router-link :to="withChallengeQuery('Home')">Home</router-link>
-        <router-link :to="withChallengeQuery('Calendar')">Calendar</router-link>
-        <router-link :to="withChallengeQuery('Rounds')">Rounds</router-link>
+        <router-link v-for="name in menuRoutes" :key="name" :to="withChallengeQuery(name)">
+          {{ name }}
+        </router-link>
       </div>
     </header>
 
@@ -173,7 +173,6 @@ async function logout() {
   text-align-last: center;
   appearance: none;
   -webkit-appearance: none;
-  -moz-appearance: none;
   cursor: pointer;
 }
 .challenge-select:focus {
@@ -187,16 +186,19 @@ async function logout() {
   align-items: center;
 }
 
+/* 링크(설정)와 버튼(로그아웃)이 같은 클래스를 쓰므로 각자의 기본값을 함께 지운다. */
 .icon-button {
   display: flex;
   align-items: center;
   justify-content: center;
   width: 40px;
   height: 40px;
+  padding: 0;
   border: none;
   background: transparent;
   color: rgba(255, 255, 255, 0.75);
   font-size: var(--text-lg);
+  text-decoration: none;
   cursor: pointer;
   transition: color 0.15s;
 }
@@ -205,17 +207,8 @@ async function logout() {
   color: var(--surface);
 }
 
-.icon-button.settings-button {
-  text-decoration: none;
-}
-
-.icon-button.logout-button {
-  padding: 0;
-}
-
 .menu-row {
   display: flex;
-  gap: 0;
   padding: 0 var(--space-6);
   background: var(--surface);
 }
@@ -245,23 +238,16 @@ async function logout() {
 }
 
 @media (max-width: 640px) {
-  .top-actions-row {
-    padding: var(--space-3) var(--space-4);
-    justify-content: flex-end;
-  }
+  .top-actions-row { padding: var(--space-3) var(--space-4); }
   .top-select-row { padding: var(--space-3) var(--space-4) var(--space-2); }
   .menu-row { padding: 0 var(--space-4); }
-  .challenge-select-wrap {
-    width: 100%;
-  }
   .challenge-select-wrap::after {
     right: 14px;
     font-size: var(--text-sm);
   }
+  /* min-width 는 flex 아이템의 auto 기본값 때문에 필요하다. */
   .challenge-select {
-    width: 100%;
     min-width: 0;
-    font-size: var(--text-base);
     padding: var(--space-3) 38px;
   }
 }

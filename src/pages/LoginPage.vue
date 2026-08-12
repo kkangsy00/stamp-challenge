@@ -1,9 +1,11 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
-import { supabase } from '../lib/supabase.js'
+import { supabase } from '../api/client.js'
+import { useAuth } from '../composables/useAuth.js'
 
 const router = useRouter()
+const { ready, isLoggedIn } = useAuth()
 const email = ref('')
 const password = ref('')
 const loading = ref(false)
@@ -19,20 +21,21 @@ async function login() {
   })
 
   if (err) {
-    error.value = '로그인 실패: 이메일 또는 비밀번호를 확인하세요'
+    error.value = '이메일 또는 비밀번호를 확인하세요'
   } else {
     router.push('/')
   }
   loading.value = false
 }
 
-supabase.auth.getSession().then(({ data }) => {
-  if (data.session) router.push('/')
-})
+// 세션이 확정되기 전에 카드를 그리면 이미 로그인한 사람에게 로그인 폼이 한 번 번쩍인다.
+watch([ready, isLoggedIn], ([isReady, loggedIn]) => {
+  if (isReady && loggedIn) router.push('/')
+}, { immediate: true })
 </script>
 
 <template>
-  <div class="login-page">
+  <div v-if="ready && !isLoggedIn" class="login-page">
     <div class="login-card">
       <h1>Stamp Challenge</h1>
 
@@ -40,23 +43,30 @@ supabase.auth.getSession().then(({ data }) => {
         <input
           v-model="email"
           type="email"
+          class="field"
           placeholder="이메일 주소"
+          aria-label="이메일 주소"
+          autocomplete="email"
+          autofocus
           required
           :disabled="loading"
         />
         <input
           v-model="password"
           type="password"
+          class="field"
           placeholder="비밀번호"
+          aria-label="비밀번호"
+          autocomplete="current-password"
           required
           :disabled="loading"
         />
-        <button type="submit" :disabled="loading">
+        <button type="submit" class="btn-accent" :disabled="loading">
           {{ loading ? '로그인 중...' : '로그인' }}
         </button>
       </form>
 
-      <p v-if="error" class="msg error">{{ error }}</p>
+      <p class="msg" role="alert">{{ error }}</p>
     </div>
   </div>
 </template>
@@ -66,7 +76,8 @@ supabase.auth.getSession().then(({ data }) => {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 100vh;
+  min-height: 100dvh;
+  padding: var(--space-4);
   background: var(--surface);
 }
 .login-card {
@@ -82,41 +93,32 @@ supabase.auth.getSession().then(({ data }) => {
   font-size: var(--text-lg);
   font-weight: 700;
   letter-spacing: -0.02em;
-  margin-bottom: var(--space-2);
+  margin-bottom: var(--space-6);
 }
 .login-form {
   display: flex;
   flex-direction: column;
   gap: var(--space-3);
 }
-.login-form input {
+/* 카드가 가운데 정렬이라 입력값만 왼쪽으로 되돌린다. */
+.login-form .field {
   padding: var(--space-3) var(--space-4);
-  border: 1px solid var(--line);
-  border-radius: var(--radius-sm);
   font-size: var(--text-base);
-  color: var(--ink);
   text-align: left;
-  transition: outline 0.1s;
 }
-.login-form input:focus {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-.login-form button {
-  padding: var(--space-3);
-  background: var(--accent);
-  color: var(--surface);
-  border: none;
-  border-radius: var(--radius-sm);
-  font-size: var(--text-base);
-  font-weight: 600;
-  cursor: pointer;
-  letter-spacing: 0.02em;
-  transition: background 0.15s;
+.login-form .btn-accent {
   margin-top: var(--space-05);
+  padding: var(--space-3);
+  font-size: var(--text-base);
+  letter-spacing: 0.02em;
 }
-.login-form button:hover:not(:disabled) { background: var(--accent-dark); }
-.login-form button:disabled { opacity: 0.5; cursor: not-allowed; }
-.msg { margin-top: var(--space-4); font-size: var(--text-sm); font-weight: 500; }
-.error { color: var(--ink); }
+/* 한 줄을 미리 잡아둔다. 문구가 뜰 때 카드가 커지면 화면 가운데가 밀린다. */
+.msg {
+  margin-top: var(--space-4);
+  min-height: calc(var(--text-sm) * 1.4);
+  font-size: var(--text-sm);
+  line-height: 1.4;
+  font-weight: 500;
+  color: var(--danger);
+}
 </style>

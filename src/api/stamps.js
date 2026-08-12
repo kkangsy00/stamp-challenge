@@ -1,5 +1,8 @@
 import { supabase, getCurrentUserId } from './client.js'
 
+// 화면에서 실제로 쓰는 컬럼만.
+const COLUMNS = 'id, name, image_path, is_active'
+
 export function stampPublicUrl(path) {
   if (!path) return ''
   const { data } = supabase.storage.from('stamps').getPublicUrl(path)
@@ -15,7 +18,7 @@ function buildStampFilePath(userId, file) {
 export async function listStamps() {
   const { data } = await supabase
     .from('stamps')
-    .select('*')
+    .select(COLUMNS)
     .order('is_active', { ascending: false })
     .order('created_at', { ascending: false })
   return data || []
@@ -24,7 +27,7 @@ export async function listStamps() {
 export async function listActiveStamps() {
   const { data } = await supabase
     .from('stamps')
-    .select('*')
+    .select(COLUMNS)
     .eq('is_active', true)
     .order('created_at')
   return data || []

@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted, watch } from 'vue'
+import { ref, computed, watch } from 'vue'
 import dayjs from 'dayjs'
 import { useChallenges } from '../composables/useChallenges.js'
 import { stampPublicUrl } from '../api/stamps.js'
@@ -16,19 +16,6 @@ const loading = ref(true)
 const totalPages = computed(() => Math.max(1, Math.ceil(totalCount.value / PAGE_SIZE)))
 const startIndex = computed(() => (currentPage.value - 1) * PAGE_SIZE)
 const endIndex = computed(() => Math.min(startIndex.value + records.value.length, totalCount.value))
-
-const urlMap = computed(() => {
-  const map = {}
-  for (const r of records.value) {
-    if (r.stamp_snapshot_path) map[r.id] = stampPublicUrl(r.stamp_snapshot_path)
-  }
-  return map
-})
-
-function clampCurrentPage() {
-  if (currentPage.value < 1) currentPage.value = 1
-  if (currentPage.value > totalPages.value) currentPage.value = totalPages.value
-}
 
 async function loadPage() {
   const cid = selectedChallengeId.value
@@ -67,16 +54,12 @@ async function deleteRecord(id) {
   await removeRecord(id)
 
   totalCount.value = await countRecords(selectedChallengeId.value)
-  clampCurrentPage()
+  // 마지막 장의 마지막 기록을 지우면 그 장이 사라진다.
+  currentPage.value = Math.min(currentPage.value, totalPages.value)
   await loadPage()
 }
 
-onMounted(fetchData)
-
-watch(selectedChallengeId, async () => {
-  currentPage.value = 1
-  await fetchData()
-})
+watch(selectedChallengeId, fetchData, { immediate: true })
 </script>
 
 <template>
@@ -102,8 +85,8 @@ watch(selectedChallengeId, async () => {
       <div v-for="(r, idx) in records" :key="r.id" class="round-card">
         <div class="round-no">{{ startIndex + idx + 1 }}</div>
         <img
-          v-if="urlMap[r.id]"
-          :src="urlMap[r.id]"
+          v-if="r.stamp_snapshot_path"
+          :src="stampPublicUrl(r.stamp_snapshot_path)"
           class="round-stamp"
         />
         <div class="round-info">
@@ -116,10 +99,14 @@ watch(selectedChallengeId, async () => {
       </div>
     </div>
   </div>
+
+  <div v-else class="empty-box">
+    활성 챌린지가 없습니다. 설정에서 챌린지를 먼저 만들어주세요.
+  </div>
 </template>
 
 <style scoped>
-.empty { color: var(--ink-4); text-align: center; padding: var(--space-12) 0; font-size: var(--text-sm); }
+.empty { padding: var(--space-12) 0; }
 .round-head {
   display: flex;
   align-items: center;
@@ -209,11 +196,10 @@ watch(selectedChallengeId, async () => {
   color: var(--ink-4);
   font-size: var(--text-sm);
   cursor: pointer;
+  opacity: 0;
   transition: color 0.15s, opacity 0.15s;
 }
 .btn-del:hover { color: var(--danger); }
-
-.btn-del { opacity: 0; }
 .round-card:hover { background: var(--surface-2); }
 .round-card:hover .btn-del,
 .btn-del:focus-visible { opacity: 1; }
