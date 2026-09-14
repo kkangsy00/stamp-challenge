@@ -38,18 +38,15 @@ const monthCount = computed(() => {
   return allRecords.value.filter(r => String(r.achieved_on).startsWith(ym)).length
 })
 
-// 연속 달성 일수. 오늘(아직 안 찍었으면 어제)부터 하루씩 거슬러 올라가며 센다.
-const streak = computed(() => {
-  const dates = new Set(allRecords.value.map(r => r.achieved_on))
-  let cursor = dayjs()
-  if (!dates.has(cursor.format('YYYY-MM-DD'))) cursor = cursor.subtract(1, 'day')
+function startOfWeek(d) {
+  return d.subtract((d.day() + 6) % 7, 'day').startOf('day')
+}
 
-  let count = 0
-  while (dates.has(cursor.format('YYYY-MM-DD'))) {
-    count++
-    cursor = cursor.subtract(1, 'day')
-  }
-  return count
+const thisWeekCount = computed(() => {
+  const start = startOfWeek(dayjs())
+  const from = start.format('YYYY-MM-DD')
+  const to = start.add(6, 'day').format('YYYY-MM-DD')
+  return allRecords.value.filter(r => r.achieved_on >= from && r.achieved_on <= to).length
 })
 
 const todayStampUrl = computed(() => {
@@ -58,13 +55,14 @@ const todayStampUrl = computed(() => {
 })
 
 const todayHeadline = computed(() => {
-  if (todayRecord.value) return `${streak.value}일째 이어가는 중`
-  if (streak.value === 0) return '오늘부터 시작해볼까요?'
-  return `오늘 찍으면 ${streak.value + 1}일째`
+  const n = thisWeekCount.value
+  if (todayRecord.value) return { prefix: '이번 주 ', count: n, suffix: '회 달성 중' }
+  if (n === 0) return { prefix: '이번 주 첫 도장 찍어볼까요?' }
+  return { prefix: `오늘 찍으면 ${n + 1}회 달성` }
 })
 
 const twoWeekDays = computed(() => {
-  const start = dayjs().startOf('week').subtract(7, 'day')
+  const start = startOfWeek(dayjs()).subtract(7, 'day')
   const days = []
   for (let i = 0; i < 14; i++) days.push(start.add(i, 'day').format('YYYY-MM-DD'))
   return days
@@ -92,7 +90,7 @@ async function fetchData() {
 
   stamps.value = await listActiveStamps()
 
-  // 연속 기록이 연말/연초에 끊기지 않도록 올해 시작일보다 넉넉히 앞에서부터 가져온다.
+  // 올해 카운트가 연말/연초에 비지 않도록 올해 시작일보다 넉넉히 앞에서부터 가져온다.
   const fromDate = dayjs().subtract(400, 'day').format('YYYY-MM-DD')
   allRecords.value = await listRecordsByChallenge(cid, { fromDate })
 
@@ -176,7 +174,9 @@ watch(selectedChallengeId, fetchData, { immediate: true })
         </div>
         <div class="today-text">
           <div class="today-label">{{ dayjs().format('M월 D일 (ddd)') }}</div>
-          <div class="today-headline">{{ todayHeadline }}</div>
+          <div class="today-headline">
+            {{ todayHeadline.prefix }}<span v-if="todayHeadline.count" class="headline-count">{{ todayHeadline.count }}</span>{{ todayHeadline.suffix }}
+          </div>
           <div v-if="todayRecord?.note" class="today-note">{{ todayRecord.note }}</div>
           <div class="today-meta">
             이번 달 <b>{{ monthCount }}</b> · 올해 <b>{{ yearCount }}</b>
@@ -293,6 +293,10 @@ watch(selectedChallengeId, fetchData, { immediate: true })
   font-weight: 700;
   color: var(--ink);
   letter-spacing: -0.02em;
+}
+.headline-count {
+  margin: 0 var(--space-1);
+  font-size: var(--text-xl);
 }
 .today-note {
   margin-top: var(--space-2);
