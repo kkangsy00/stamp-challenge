@@ -297,6 +297,7 @@ watch(selectedChallengeId, fetchData, { immediate: true })
 .headline-count {
   margin: 0 var(--space-1);
   font-size: var(--text-xl);
+  line-height: 1;
 }
 .today-note {
   margin-top: var(--space-2);
