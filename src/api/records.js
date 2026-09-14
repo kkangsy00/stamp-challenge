@@ -1,7 +1,9 @@
 import { supabase, getCurrentUserId } from './client.js'
 
-// 화면에서 실제로 쓰는 컬럼만.
-const COLUMNS = 'id, achieved_on, stamp_snapshot_path, note'
+// 화면에서 실제로 쓰는 컬럼만. 도장 이미지는 stamps 를 조인해서 가져온다.
+const COLUMNS = 'id, achieved_on, note, stamp_id, stamps(image_path)'
+
+const toRecord = ({ stamps, ...rest }) => ({ ...rest, stamp_image_path: stamps?.image_path || null })
 
 export async function listRecordsByChallenge(challengeId, { fromDate, ascending = false } = {}) {
   let query = supabase
@@ -12,7 +14,7 @@ export async function listRecordsByChallenge(challengeId, { fromDate, ascending 
   if (fromDate) query = query.gte('achieved_on', fromDate)
 
   const { data } = await query.order('achieved_on', { ascending })
-  return data || []
+  return (data || []).map(toRecord)
 }
 
 export async function countRecords(challengeId) {
@@ -30,7 +32,7 @@ export async function listRecordsPaged(challengeId, from, to) {
     .eq('challenge_id', challengeId)
     .range(from, to)
     .order('achieved_on', { ascending: true })
-  return data || []
+  return (data || []).map(toRecord)
 }
 
 // 달성 기록. (challenge_id, achieved_on) UNIQUE 제약 기반 upsert —
@@ -45,7 +47,6 @@ export async function achieve({ challengeId, achieved_on, stamp, mode, note }) {
         challenge_id: challengeId,
         achieved_on,
         stamp_id: stamp?.id ?? null,
-        stamp_snapshot_path: stamp?.image_path ?? null,
         selection_mode: mode,
         note: note?.trim() || null,
       },

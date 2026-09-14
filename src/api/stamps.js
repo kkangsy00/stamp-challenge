@@ -55,7 +55,7 @@ export async function uploadStamp({ name, file }) {
   return { error: dbErr }
 }
 
-// 도장 이미지 교체 + 기존 기록 스냅샷 경로 갱신 + 옛 파일 정리.
+// 도장 이미지 교체 + 옛 파일 정리. 기록은 stamp_id 로 조인하므로 따로 손댈 게 없다.
 export async function replaceStampImage(stamp, file) {
   const userId = await getCurrentUserId()
   const { blob, contentType, filePath } = await prepareUpload(userId, file)
@@ -69,14 +69,8 @@ export async function replaceStampImage(stamp, file) {
     .eq('id', stamp.id)
   if (stampUpdateError) return { error: stampUpdateError }
 
-  const { error: recordsUpdateError } = await supabase
-    .from('challenge_records')
-    .update({ stamp_snapshot_path: filePath })
-    .eq('stamp_id', stamp.id)
-  if (recordsUpdateError) return { error: recordsUpdateError }
-
-  // 참조가 모두 새 파일로 옮겨간 뒤에야 옛 파일을 지운다. 여기서 실패해도 화면 동작에는
-  // 영향이 없으므로 에러로 올리지 않는다 — 정비 페이지에서 고아 파일로 다시 잡힌다.
+  // 참조가 새 파일로 옮겨간 뒤에야 옛 파일을 지운다. 여기서 실패해도 화면 동작에는
+  // 영향이 없으므로 에러로 올리지 않는다.
   if (stamp.image_path) await supabase.storage.from('stamps').remove([stamp.image_path])
   return { error: null }
 }
@@ -93,7 +87,7 @@ export async function restoreStamp(id) {
 export async function hardDeleteStamp(stamp) {
   const { error: recordError } = await supabase
     .from('challenge_records')
-    .update({ stamp_id: null, stamp_snapshot_path: null })
+    .update({ stamp_id: null })
     .eq('stamp_id', stamp.id)
   if (recordError) return { error: recordError }
 

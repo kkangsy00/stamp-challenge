@@ -22,7 +22,7 @@ const calendarDays = computed(() => {
   for (const r of records.value) {
     byDate[r.achieved_on] = {
       id: r.id,
-      url: r.stamp_snapshot_path ? stampPublicUrl(r.stamp_snapshot_path) : '',
+      url: r.stamp_image_path ? stampPublicUrl(r.stamp_image_path) : '',
     }
   }
 

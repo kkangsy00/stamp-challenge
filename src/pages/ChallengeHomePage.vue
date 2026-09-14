@@ -50,7 +50,7 @@ const thisWeekCount = computed(() => {
 })
 
 const todayStampUrl = computed(() => {
-  const path = todayRecord.value?.stamp_snapshot_path
+  const path = todayRecord.value?.stamp_image_path
   return path ? stampPublicUrl(path) : ''
 })
 
@@ -71,7 +71,7 @@ const twoWeekDays = computed(() => {
 const twoWeekUrlMap = computed(() => {
   const map = {}
   for (const d of twoWeekDays.value) {
-    const path = allRecords.value.find(r => r.achieved_on === d)?.stamp_snapshot_path
+    const path = allRecords.value.find(r => r.achieved_on === d)?.stamp_image_path
     if (path) map[d] = stampPublicUrl(path)
   }
   return map

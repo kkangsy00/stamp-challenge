@@ -85,8 +85,8 @@ watch(selectedChallengeId, fetchData, { immediate: true })
       <div v-for="(r, idx) in records" :key="r.id" class="round-card">
         <div class="round-no">{{ startIndex + idx + 1 }}</div>
         <img
-          v-if="r.stamp_snapshot_path"
-          :src="stampPublicUrl(r.stamp_snapshot_path)"
+          v-if="r.stamp_image_path"
+          :src="stampPublicUrl(r.stamp_image_path)"
           class="round-stamp"
         />
         <div class="round-info">
