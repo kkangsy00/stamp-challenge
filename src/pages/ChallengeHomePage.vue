@@ -57,7 +57,7 @@ const todayStampUrl = computed(() => {
 const todayHeadline = computed(() => {
   const n = thisWeekCount.value
   if (todayRecord.value) return { prefix: '이번 주 ', count: n, suffix: '회 달성 중' }
-  if (n === 0) return { prefix: '이번 주 첫 도장 찍어볼까요?' }
+  if (n === 0) return { prefix: '이번 주 첫 도장!' }
   return { prefix: `오늘 찍으면 ${n + 1}회 달성` }
 })
 
